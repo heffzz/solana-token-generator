@@ -1,0 +1,15 @@
+[build]
+cmd = "npm install"
+
+[deploy]
+cmd = "npm start"
+
+[env]
+PORT = "3001"
+SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+
+[healthcheck]
+path = "/api/system/stats"
+interval = "30s"
+timeout = "10s"
+retries = 3

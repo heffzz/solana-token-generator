@@ -1,0 +1,57 @@
+{
+  "name": "lunacoin-dao-governance",
+  "version": "1.0.0",
+  "description": "Decentralized Autonomous Organization for LUNACOIN governance",
+  "main": "governance.js",
+  "scripts": {
+    "start": "node governance.js",
+    "dev": "nodemon governance.js",
+    "test": "jest",
+    "deploy": "node deploy/deploy-dao.js",
+    "proposal": "node scripts/create-proposal.js",
+    "vote": "node scripts/vote.js",
+    "execute": "node scripts/execute-proposal.js",
+    "delegate": "node scripts/delegate.js",
+    "snapshot": "node scripts/create-snapshot.js",
+    "monitor": "node monitor/dao-monitor.js",
+    "analytics": "node analytics/dao-analytics.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.8",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.10.0",
+    "winston": "^3.10.0",
+    "node-cron": "^3.0.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "eslint": "^8.51.0",
+    "prettier": "^3.0.3"
+  },
+  "keywords": [
+    "dao",
+    "governance",
+    "solana",
+    "defi",
+    "voting",
+    "proposals",
+    "lunacoin",
+    "decentralized",
+    "autonomous",
+    "organization"
+  ],
+  "author": "LUNACOIN DAO Team",
+  "license": "MIT"
+}

@@ -1,0 +1,40 @@
+{
+  "name": "lunacoin-spl-token",
+  "version": "1.0.0",
+  "description": "Sistema autonomo per la creazione e gestione di token SPL su Solana",
+  "main": "index.js",
+  "scripts": {
+    "start": "node start.js",
+    "system": "node index.js",
+    "generate": "node tokenGenerator.js",
+    "validate": "node tokenValidator.js",
+    "deploy": "node dexManager.js",
+    "monitor": "node monitor.js",
+    "test": "node test.js",
+    "setup": "node start.js",
+    "backup": "node -e \"const BackupManager = require('./backup'); new BackupManager().createFullBackup().then(r => console.log(r))\""
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.9",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.2.0",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0"
+  },
+  "keywords": [
+    "solana",
+    "spl-token",
+    "cryptocurrency",
+    "blockchain",
+    "memecoin",
+    "defi"
+  ],
+  "author": "LUNACOIN Team",
+  "license": "MIT"
+}

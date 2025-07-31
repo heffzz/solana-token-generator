@@ -1,0 +1,14 @@
+{
+  "name": "solana-wallet-generator",
+  "version": "1.0.0",
+  "description": "Generatore di wallet Solana",
+  "main": "generate_keypair.js",
+  "scripts": {
+    "generate": "node generate_keypair.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.78.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

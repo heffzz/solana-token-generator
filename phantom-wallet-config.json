@@ -1,0 +1,9 @@
+{
+  "mode": "phantom_integration",
+  "wallet": {
+    "publicKey": "jz8DAfrM7Gryn9ZmvdntGMm6LJ32WLukavHgbw2QLB9",
+    "network": "mainnet",
+    "note": "Configurazione Phantom - Solo indirizzo pubblico salvato"
+  },
+  "createdAt": "2025-07-30T22:25:36.914Z"
+}

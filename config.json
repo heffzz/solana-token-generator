@@ -1,0 +1,62 @@
+{
+  "solana": {
+    "rpcUrl": "https://api.devnet.solana.com",
+    "network": "devnet"
+  },
+  "tokenGeneration": {
+    "totalLiquidityEur": 100,
+    "minTokens": 10,
+    "maxTokens": 50,
+    "minSupply": 1000000,
+    "maxSupply": 10000000000,
+    "minDecimals": 6,
+    "maxDecimals": 9
+  },
+  "dex": {
+    "raydium": {
+      "enabled": true,
+      "minLiquidity": 10,
+      "maxSlippage": 0.05,
+      "fee": 0.0025
+    },
+    "orca": {
+      "enabled": true,
+      "minLiquidity": 8,
+      "maxSlippage": 0.03,
+      "fee": 0.003
+    },
+    "serum": {
+      "enabled": true,
+      "minLiquidity": 5,
+      "maxSlippage": 0.02,
+      "fee": 0.0022
+    }
+  },
+  "monitoring": {
+    "intervalMs": 300000,
+    "autoFixEnabled": true
+  },
+  "validation": {
+    "checkSolscan": true,
+    "checkJupiter": true,
+    "checkSimilarity": true,
+    "similarityThreshold": 0.8,
+    "cacheSize": 1000
+  },
+  "autoFix": {
+    "enabled": true,
+    "maxAttempts": 3,
+    "strategies": {
+      "insufficientFunds": true,
+      "rateLimiting": true,
+      "networkErrors": true,
+      "validationErrors": true
+    }
+  },
+  "performance": {
+    "batchSize": 5,
+    "concurrentOperations": 3,
+    "maxRetryAttempts": 3,
+    "retryDelayMs": 5000
+  }
+}

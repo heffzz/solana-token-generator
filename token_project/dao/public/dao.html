@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNACOIN DAO - Governance Decentralizzata</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .proposals-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .proposal-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .proposal-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .proposal-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .proposal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .proposal-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-succeeded {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-defeated {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status-executed {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .proposal-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .proposal-description {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .voting-progress {
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.3s ease;
+        }
+        
+        .vote-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .widget {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .widget-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .voting-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .vote-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .vote-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .vote-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .vote-for {
+            border-color: #4caf50;
+        }
+        
+        .vote-for.selected {
+            background: #4caf50;
+        }
+        
+        .vote-against {
+            border-color: #f44336;
+        }
+        
+        .vote-against.selected {
+            background: #f44336;
+        }
+        
+        .vote-abstain {
+            border-color: #ff9800;
+        }
+        
+        .vote-abstain.selected {
+            background: #ff9800;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .delegation-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #4caf50;
+        }
+        
+        .notification.error {
+            background: #f44336;
+        }
+        
+        .notification.info {
+            background: #2196f3;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .vote-options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-university"></i> LUNACOIN DAO</h1>
+            <p>Sistema di Governance Decentralizzata per la Community LUNACOIN</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProposals">-</div>
+                    <div class="stat-label">Proposte Totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeProposals">-</div>
+                    <div class="stat-label">Proposte Attive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalVotes">-</div>
+                    <div class="stat-label">Voti Totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="participation">-</div>
+                    <div class="stat-label">Partecipazione</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="votingPower">-</div>
+                    <div class="stat-label">Potere di Voto</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="openCreateProposal()">
+                <i class="fas fa-plus"></i> Crea Nuova Proposta
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Proposals Section -->
+            <div class="proposals-section">
+                <div class="section-title">
+                    <i class="fas fa-vote-yea"></i> Proposte di Governance
+                </div>
+                
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Tutte</button>
+                    <button class="filter-btn" data-filter="active">Attive</button>
+                    <button class="filter-btn" data-filter="succeeded">Approvate</button>
+                    <button class="filter-btn" data-filter="executed">Eseguite</button>
+                    <button class="filter-btn" data-filter="defeated">Respinte</button>
+                </div>
+                
+                <div id="proposalsList">
+                    <div class="empty-state">
+                        <i class="fas fa-vote-yea"></i>
+                        <h3>Caricamento proposte...</h3>
+                        <div class="loading"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Voting Power Widget -->
+                <div class="widget">
+                    <div class="widget-title">
+                        <i class="fas fa-balance-scale"></i> Il Tuo Potere di Voto
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="userVotingPower">-</div>
+                        <div class="stat-label">LUNA Tokens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="delegatedPower">-</div>
+                        <div class="stat-label">Potere Delegato</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="openDelegateModal()" style="width: 100%; margin-top: 10px;">
+                        <i class="fas fa-hand-holding"></i> Delega Voti
+                    </button>
+                </div>
+                
+                <!-- Governance Stats -->
+                <div class="widget">
+                    <div class="widget-title">
+                        <i class="fas fa-chart-pie"></i> Statistiche Governance
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="governanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="widget">
+                    <div class="widget-title">
+                        <i class="fas fa-history"></i> Attività Recente
+                    </div>
+                    <div id="recentActivity">
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <p>Nessuna attività recente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Proposal Modal -->
+    <div id="createProposalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Crea Nuova Proposta</h2>
+                <button class="close-btn" onclick="closeModal('createProposalModal')">&times;</button>
+            </div>
+            
+            <form id="createProposalForm">
+                <div class="form-group">
+                    <label class="form-label">Titolo della Proposta</label>
+                    <input type="text" class="form-input" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Categoria</label>
+                    <select class="form-select" name="category" required>
+                        <option value="">Seleziona categoria</option>
+                        <option value="treasury">Tesoreria</option>
+                        <option value="governance">Governance</option>
+                        <option value="technical">Tecnico</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="other">Altro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descrizione</label>
+                    <textarea class="form-textarea" name="description" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Indirizzo Proposer</label>
+                    <input type="text" class="form-input" name="proposer" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tags (separati da virgola)</label>
+                    <input type="text" class="form-input" name="tags">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Crea Proposta
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Proposal Details Modal -->
+    <div id="proposalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="proposalModalTitle">Dettagli Proposta</h2>
+                <button class="close-btn" onclick="closeModal('proposalModal')">&times;</button>
+            </div>
+            
+            <div id="proposalDetails">
+                <!-- Proposal details will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delegate Modal -->
+    <div id="delegateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Delega Potere di Voto</h2>
+                <button class="close-btn" onclick="closeModal('delegateModal')">&times;</button>
+            </div>
+            
+            <form id="delegateForm">
+                <div class="form-group">
+                    <label class="form-label">Indirizzo Delegato</label>
+                    <input type="text" class="form-input" name="delegate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Quantità da Delegare</label>
+                    <input type="number" class="form-input" name="amount" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Durata (giorni, opzionale)</label>
+                    <input type="number" class="form-input" name="duration">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-hand-holding"></i> Delega Voti
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        // Global variables
+        let socket;
+        let proposals = [];
+        let currentFilter = 'all';
+        let userAddress = '';
+        let governanceChart;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSocket();
+            loadInitialData();
+            setupEventListeners();
+            initializeChart();
+        });
+        
+        // Socket.IO connection
+        function initializeSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('Connected to DAO server');
+                socket.emit('subscribe-governance');
+            });
+            
+            socket.on('proposal-created', (data) => {
+                showNotification('Nuova proposta creata: ' + data.title, 'info');
+                loadProposals();
+            });
+            
+            socket.on('vote-cast', (data) => {
+                showNotification('Nuovo voto registrato', 'success');
+                updateProposalVotes(data);
+            });
+            
+            socket.on('proposal-status-updated', (data) => {
+                showNotification(`Proposta ${data.status}: ${data.proposalId}`, 'info');
+                loadProposals();
+            });
+            
+            socket.on('live-stats', (stats) => {
+                updateLiveStats(stats);
+            });
+        }
+        
+        // Load initial data
+        async function loadInitialData() {
+            await Promise.all([
+                loadProposals(),
+                loadGovernanceStats(),
+                loadUserVotingPower()
+            ]);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    filterProposals();
+                });
+            });
+            
+            // Forms
+            document.getElementById('createProposalForm').addEventListener('submit', handleCreateProposal);
+            document.getElementById('delegateForm').addEventListener('submit', handleDelegate);
+            
+            // Modal close on outside click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Load proposals
+        async function loadProposals() {
+            try {
+                const response = await fetch('/api/proposals');
+                const data = await response.json();
+                
+                if (data.success) {
+                    proposals = data.data.proposals;
+                    renderProposals();
+                }
+            } catch (error) {
+                console.error('Error loading proposals:', error);
+                showNotification('Errore nel caricamento delle proposte', 'error');
+            }
+        }
+        
+        // Render proposals
+        function renderProposals() {
+            const container = document.getElementById('proposalsList');
+            
+            if (proposals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-vote-yea"></i>
+                        <h3>Nessuna proposta trovata</h3>
+                        <p>Sii il primo a creare una proposta!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredProposals = filterProposalsByStatus(proposals);
+            
+            container.innerHTML = filteredProposals.map(proposal => `
+                <div class="proposal-card" onclick="openProposalDetails('${proposal.id}')">
+                    <div class="proposal-header">
+                        <div>
+                            <div class="proposal-title">${proposal.title}</div>
+                            <div class="proposal-meta">
+                                <span><i class="fas fa-user"></i> ${proposal.proposer.substring(0, 8)}...</span>
+                                <span><i class="fas fa-tag"></i> ${proposal.category}</span>
+                                <span class="proposal-status status-${proposal.status}">${getStatusText(proposal.status)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="proposal-description">
+                        ${proposal.description.substring(0, 150)}${proposal.description.length > 150 ? '...' : ''}
+                    </div>
+                    
+                    ${proposal.status === 'active' ? `
+                        <div class="voting-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${calculateVotePercentage(proposal)}%"></div>
+                            </div>
+                            <div class="vote-stats">
+                                <span>Favorevoli: ${formatNumber(proposal.votes.for)}</span>
+                                <span>Contrari: ${formatNumber(proposal.votes.against)}</span>
+                                <span>Astenuti: ${formatNumber(proposal.votes.abstain)}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="proposal-meta">
+                        <span><i class="fas fa-clock"></i> ${formatDate(proposal.createdAt)}</span>
+                        <span><i class="fas fa-users"></i> ${proposal.voters.length} voti</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter proposals by status
+        function filterProposalsByStatus(proposals) {
+            if (currentFilter === 'all') {
+                return proposals;
+            }
+            return proposals.filter(p => p.status === currentFilter);
+        }
+        
+        // Filter proposals
+        function filterProposals() {
+            renderProposals();
+        }
+        
+        // Open proposal details
+        async function openProposalDetails(proposalId) {
+            try {
+                const response = await fetch(`/api/proposals/${proposalId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const proposal = data.data;
+                    renderProposalDetails(proposal);
+                    document.getElementById('proposalModal').style.display = 'block';
+                    
+                    // Subscribe to proposal updates
+                    socket.emit('subscribe-proposal', proposalId);
+                }
+            } catch (error) {
+                console.error('Error loading proposal details:', error);
+                showNotification('Errore nel caricamento dei dettagli', 'error');
+            }
+        }
+        
+        // Render proposal details
+        function renderProposalDetails(proposal) {
+            document.getElementById('proposalModalTitle').textContent = proposal.title;
+            
+            const detailsContainer = document.getElementById('proposalDetails');
+            detailsContainer.innerHTML = `
+                <div class="proposal-meta" style="margin-bottom: 20px;">
+                    <span><i class="fas fa-user"></i> Proposer: ${proposal.proposer}</span>
+                    <span><i class="fas fa-tag"></i> Categoria: ${proposal.category}</span>
+                    <span class="proposal-status status-${proposal.status}">${getStatusText(proposal.status)}</span>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4>Descrizione</h4>
+                    <p>${proposal.description}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4>Statistiche Voto</h4>
+                    <div class="vote-stats">
+                        <div>Favorevoli: ${formatNumber(proposal.votes.for)} LUNA</div>
+                        <div>Contrari: ${formatNumber(proposal.votes.against)} LUNA</div>
+                        <div>Astenuti: ${formatNumber(proposal.votes.abstain)} LUNA</div>
+                        <div>Partecipazione: ${proposal.participation?.percentage || 0}%</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4>Timeline</h4>
+                    <div>
+                        <div>Creata: ${formatDate(proposal.createdAt)}</div>
+                        <div>Inizio Voto: ${formatDate(proposal.votingStartTime)}</div>
+                        <div>Fine Voto: ${formatDate(proposal.votingEndTime)}</div>
+                        ${proposal.executionTime ? `<div>Eseguita: ${formatDate(proposal.executionTime)}</div>` : ''}
+                    </div>
+                </div>
+                
+                ${proposal.status === 'active' ? `
+                    <div class="voting-section">
+                        <h4>Vota questa Proposta</h4>
+                        <div class="vote-options">
+                            <button class="vote-btn vote-for" data-vote="for">
+                                <i class="fas fa-thumbs-up"></i> Favorevole
+                            </button>
+                            <button class="vote-btn vote-against" data-vote="against">
+                                <i class="fas fa-thumbs-down"></i> Contrario
+                            </button>
+                            <button class="vote-btn vote-abstain" data-vote="abstain">
+                                <i class="fas fa-minus"></i> Astenuto
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Indirizzo Wallet</label>
+                            <input type="text" class="form-input" id="voterAddress" placeholder="Il tuo indirizzo wallet">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Motivazione (opzionale)</label>
+                            <textarea class="form-textarea" id="voteReason" placeholder="Spiega il motivo del tuo voto"></textarea>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="castVote('${proposal.id}')" style="width: 100%;">
+                            <i class="fas fa-vote-yea"></i> Invia Voto
+                        </button>
+                    </div>
+                ` : ''}
+                
+                ${proposal.status === 'succeeded' ? `
+                    <button class="btn btn-primary" onclick="executeProposal('${proposal.id}')" style="width: 100%;">
+                        <i class="fas fa-play"></i> Esegui Proposta
+                    </button>
+                ` : ''}
+            `;
+            
+            // Add vote button listeners
+            document.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                });
+            });
+        }
+        
+        // Cast vote
+        async function castVote(proposalId) {
+            const selectedVote = document.querySelector('.vote-btn.selected');
+            const voterAddress = document.getElementById('voterAddress').value;
+            const reason = document.getElementById('voteReason').value;
+            
+            if (!selectedVote) {
+                showNotification('Seleziona un\'opzione di voto', 'error');
+                return;
+            }
+            
+            if (!voterAddress) {
+                showNotification('Inserisci il tuo indirizzo wallet', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/proposals/${proposalId}/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        voter: voterAddress,
+                        vote: selectedVote.dataset.vote,
+                        reason: reason
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Voto registrato con successo!', 'success');
+                    closeModal('proposalModal');
+                    loadProposals();
+                } else {
+                    showNotification(data.error || 'Errore nel voto', 'error');
+                }
+            } catch (error) {
+                console.error('Error casting vote:', error);
+                showNotification('Errore nel voto', 'error');
+            }
+        }
+        
+        // Execute proposal
+        async function executeProposal(proposalId) {
+            const executorAddress = prompt('Inserisci il tuo indirizzo wallet per eseguire la proposta:');
+            
+            if (!executorAddress) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/proposals/${proposalId}/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        executor: executorAddress
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Proposta eseguita con successo!', 'success');
+                    closeModal('proposalModal');
+                    loadProposals();
+                } else {
+                    showNotification(data.error || 'Errore nell\'esecuzione', 'error');
+                }
+            } catch (error) {
+                console.error('Error executing proposal:', error);
+                showNotification('Errore nell\'esecuzione', 'error');
+            }
+        }
+        
+        // Handle create proposal
+        async function handleCreateProposal(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const proposalData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                category: formData.get('category'),
+                proposer: formData.get('proposer'),
+                tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()) : []
+            };
+            
+            try {
+                const response = await fetch('/api/proposals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(proposalData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Proposta creata con successo!', 'success');
+                    closeModal('createProposalModal');
+                    e.target.reset();
+                    loadProposals();
+                } else {
+                    showNotification(data.error || 'Errore nella creazione', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating proposal:', error);
+                showNotification('Errore nella creazione', 'error');
+            }
+        }
+        
+        // Handle delegate
+        async function handleDelegate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const delegationData = {
+                delegator: userAddress || prompt('Inserisci il tuo indirizzo wallet:'),
+                delegate: formData.get('delegate'),
+                amount: formData.get('amount'),
+                duration: formData.get('duration') || null
+            };
+            
+            if (!delegationData.delegator) {
+                showNotification('Indirizzo delegante richiesto', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/delegate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(delegationData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Delega creata con successo!', 'success');
+                    closeModal('delegateModal');
+                    e.target.reset();
+                    loadUserVotingPower();
+                } else {
+                    showNotification(data.error || 'Errore nella delega', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating delegation:', error);
+                showNotification('Errore nella delega', 'error');
+            }
+        }
+        
+        // Load governance stats
+        async function loadGovernanceStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateGovernanceStats(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading governance stats:', error);
+            }
+        }
+        
+        // Update governance stats
+        function updateGovernanceStats(stats) {
+            document.getElementById('totalProposals').textContent = stats.totalProposals || 0;
+            document.getElementById('activeProposals').textContent = stats.activeProposals || 0;
+            document.getElementById('totalVotes').textContent = stats.totalVotes || 0;
+            document.getElementById('participation').textContent = (stats.participationRate || 0).toFixed(1) + '%';
+            
+            // Update chart
+            if (governanceChart && stats.topCategories) {
+                updateChart(stats.topCategories);
+            }
+        }
+        
+        // Load user voting power
+        async function loadUserVotingPower() {
+            if (!userAddress) {
+                userAddress = localStorage.getItem('userAddress');
+                if (!userAddress) {
+                    document.getElementById('userVotingPower').textContent = 'Non connesso';
+                    document.getElementById('delegatedPower').textContent = '-';
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch(`/api/voting-power/${userAddress}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('userVotingPower').textContent = formatNumber(data.data.ownPower);
+                    document.getElementById('delegatedPower').textContent = formatNumber(data.data.delegatedPower);
+                    document.getElementById('votingPower').textContent = formatNumber(data.data.totalPower);
+                }
+            } catch (error) {
+                console.error('Error loading voting power:', error);
+            }
+        }
+        
+        // Initialize chart
+        function initializeChart() {
+            const ctx = document.getElementById('governanceChart').getContext('2d');
+            governanceChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c',
+                            '#4facfe',
+                            '#00f2fe'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update chart
+        function updateChart(categories) {
+            governanceChart.data.labels = categories.map(c => c.category);
+            governanceChart.data.datasets[0].data = categories.map(c => c.count);
+            governanceChart.update();
+        }
+        
+        // Update live stats
+        function updateLiveStats(stats) {
+            document.getElementById('totalProposals').textContent = stats.totalProposals;
+            document.getElementById('activeProposals').textContent = stats.activeProposals;
+            document.getElementById('votingPower').textContent = formatNumber(stats.totalVotingPower);
+        }
+        
+        // Update proposal votes
+        function updateProposalVotes(data) {
+            // Update the proposal in the list
+            const proposalIndex = proposals.findIndex(p => p.id === data.proposalId);
+            if (proposalIndex !== -1) {
+                proposals[proposalIndex].votes = data.newTotals;
+                renderProposals();
+            }
+        }
+        
+        // Utility functions
+        function openCreateProposal() {
+            document.getElementById('createProposalModal').style.display = 'block';
+        }
+        
+        function openDelegateModal() {
+            document.getElementById('delegateModal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'draft': 'Bozza',
+                'active': 'Attiva',
+                'succeeded': 'Approvata',
+                'defeated': 'Respinta',
+                'executed': 'Eseguita',
+                'cancelled': 'Annullata',
+                'expired': 'Scaduta'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function formatNumber(num) {
+            if (!num) return '0';
+            const number = typeof num === 'string' ? parseInt(num) : num;
+            return number.toLocaleString();
+        }
+        
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('it-IT', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function calculateVotePercentage(proposal) {
+            const total = BigInt(proposal.votes.for) + BigInt(proposal.votes.against) + BigInt(proposal.votes.abstain);
+            if (total === BigInt(0)) return 0;
+            return Number(BigInt(proposal.votes.for) * BigInt(100) / total);
+        }
+        
+        // Request live stats periodically
+        setInterval(() => {
+            if (socket && socket.connected) {
+                socket.emit('get-live-stats');
+            }
+        }, 30000); // Every 30 seconds
+    </script>
+</body>
+</html>
