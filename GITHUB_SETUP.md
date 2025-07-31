@@ -30,7 +30,7 @@ Dopo aver creato il repository su GitHub, esegui questi comandi:
 
 ```bash
 # Sostituisci TUO-USERNAME con il tuo username GitHub
-git remote add origin https://github.com/TUO-USERNAME/solana-token-generator.git
+git remote add origin https://github.com/heffzz/solana-token-generator.git
 
 # Verifica connessione
 git remote -v
@@ -47,7 +47,7 @@ git push -u origin main
 cd c:\Users\luca6\Desktop\crypto
 
 # Aggiungi remote (SOSTITUISCI TUO-USERNAME!)
-git remote add origin https://github.com/TUO-USERNAME/solana-token-generator.git
+git remote add origin https://github.com/heffzz/solana-token-generator.git
 
 # Rinomina branch principale
 git branch -M main
