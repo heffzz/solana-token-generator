@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import fetch from 'node-fetch';
 import { TokenGenerator } from './tokenGenerator.js';
 import { DEXManager } from './dexManager.js';
 import { Monitor } from './monitor.js';
@@ -20,6 +21,9 @@ const logger = new Logger();
 const tokenGenerator = new TokenGenerator();
 const dexManager = new DEXManager();
 const monitor = new Monitor();
+
+// Configurazione proxy per Phantom Wallet
+const PHANTOM_SERVER_URL = 'http://localhost:3000/api';
 
 // Stato del sistema
 let systemState = {
@@ -459,6 +463,59 @@ async function saveSystemBackup() {
   }
 }
 
+// Proxy endpoints per Phantom Wallet
+
+// GET /api/phantom/balance/:publicKey/:network? - Ottieni saldo wallet
+app.get('/api/phantom/balance/:publicKey/:network?', async (req, res) => {
+  try {
+    const { publicKey, network = 'devnet' } = req.params;
+    const response = await fetch(`${PHANTOM_SERVER_URL}/balance/${publicKey}/${network}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    logger.error('Errore nel proxy balance Phantom:', error);
+    res.status(500).json({ success: false, error: 'Errore di connessione al server Phantom' });
+  }
+});
+
+// POST /api/phantom/airdrop - Richiedi airdrop
+app.post('/api/phantom/airdrop', async (req, res) => {
+  try {
+    const { publicKey } = req.body;
+    const response = await fetch(`${PHANTOM_SERVER_URL}/airdrop`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ publicKey })
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    logger.error('Errore nel proxy airdrop Phantom:', error);
+    res.status(500).json({ success: false, error: 'Errore di connessione al server Phantom' });
+  }
+});
+
+// POST /api/phantom/save-config - Salva configurazione wallet
+app.post('/api/phantom/save-config', async (req, res) => {
+  try {
+    const config = req.body;
+    const response = await fetch(`${PHANTOM_SERVER_URL}/save-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(config)
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    logger.error('Errore nel proxy save-config Phantom:', error);
+    res.status(500).json({ success: false, error: 'Errore di connessione al server Phantom' });
+  }
+});
+
 // Avvio del server
 app.listen(PORT, () => {
   logger.success(`API Server avviato su http://localhost:${PORT}`);
@@ -473,6 +530,9 @@ app.listen(PORT, () => {
   console.log(`   POST /api/token/generate - Genera token`);
   console.log(`   POST /api/system/stop    - Ferma sistema`);
   console.log(`   GET  /api/tokens         - Lista token creati`);
+  console.log(`   GET  /api/phantom/balance/:publicKey/:network? - Saldo wallet`);
+  console.log(`   POST /api/phantom/airdrop - Richiedi airdrop`);
+  console.log(`   POST /api/phantom/save-config - Salva configurazione wallet`);
   console.log(`\n✅ Pronto per la generazione di token SPL reali!\n`);
 });
 

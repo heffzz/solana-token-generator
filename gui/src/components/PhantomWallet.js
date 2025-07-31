@@ -111,7 +111,8 @@ const PhantomWallet = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/balance/${walletAddress}/${network}`);
+      // Usa il servizio API invece di fetch diretto
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/balance/${walletAddress}/${network}`);
       const data = await response.json();
       
       if (data.success) {
@@ -134,7 +135,7 @@ const PhantomWallet = () => {
       setAirdropLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:3000/api/airdrop', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/airdrop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,7 +173,7 @@ const PhantomWallet = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/save-config', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/save-config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
