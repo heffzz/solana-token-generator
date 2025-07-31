@@ -88,12 +88,13 @@ Una volta su GitHub, puoi immediatamente:
    - Environment: `Node`
    - Build Command: `npm install`
    - Start Command: `npm start`
+5. **✅ COMPLETATO**: Il tuo backend è disponibile su: `https://solana-token-generator-grmy.onrender.com`
 
 ## 🔧 Configurazione Post-Deploy
 
 ### Variabili Ambiente Vercel
 ```
-REACT_APP_API_URL=https://your-backend.onrender.com
+REACT_APP_API_URL=https://solana-token-generator-grmy.onrender.com
 ```
 
 ### Test Funzionamento
