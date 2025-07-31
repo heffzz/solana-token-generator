@@ -1,323 +1,177 @@
-# 🚀 Solana Token Generator
+# 🚀 Sistema Autonomo di Generazione Token SPL su Solana
 
-Sistema autonomo per la creazione e distribuzione di token SPL su Solana.
+## 🎯 Descrizione
 
-## 🔧 Installazione
+Sistema completamente autonomo per la creazione, testing, correzione e distribuzione di token SPL su Solana. Il sistema opera "a carta bianca" con il massimo grado di autonomia e controllo qualità.
 
+## ✨ Caratteristiche Principali
+
+### 🤖 Autonomia Completa
+- **Pianificazione automatica**: Decide autonomamente nome, simbolo, supply e caratteristiche del token
+- **Controllo unicità**: Verifica tramite API e explorer Solana che nome e simbolo siano unici
+- **Generazione descrizione**: Crea descrizioni uniche e marketing-oriented
+- **Autocorrezione**: Sistema di bug detection e correzione automatica
+- **Monitoraggio continuo**: Controlli periodici e correzioni autonome
+
+### 🔗 Integrazione Blockchain
+- **Solana Mainnet**: Connessione diretta alla blockchain Solana
+- **SPL Token**: Creazione e gestione token SPL nativi
+- **DEX Integration**: Listing automatico su Raydium, Orca, Serum
+- **Liquidità automatica**: Aggiunta automatica di liquidità sui DEX
+
+### 🖥️ Interfaccia Utente
+- **Dashboard React**: Interfaccia moderna e responsive
+- **Monitoraggio real-time**: Statistiche e metriche in tempo reale
+- **Gestione DEX**: Controllo e monitoraggio dei DEX
+- **Log system**: Tracciamento completo di tutte le operazioni
+
+## 🏗️ Architettura
+
+```
+├── gui/                     # Frontend React
+│   ├── src/                 # Codice sorgente frontend
+│   ├── build/               # Build di produzione
+│   └── api-server.js        # Server API backend
+│
+├── solana-backend/          # Backend API separato
+│   ├── api-server.js        # Server principale
+│   ├── package.json         # Dipendenze
+│   └── Dockerfile           # Container Docker
+│
+├── token_project/           # Sistema core generazione token
+│   ├── tokenGenerator.js    # Generatore principale
+│   ├── dexManager.js        # Gestione DEX
+│   ├── monitor.js           # Monitoraggio sistema
+│   └── dao/                 # Sistema governance
+│
+└── phantom-integration/     # Integrazione wallet Phantom
+```
+
+## 🚀 Quick Start
+
+### Prerequisiti
+- Node.js 16+
+- npm o yarn
+- Git
+
+### Installazione
 ```bash
+# Clona il repository
+git clone https://github.com/TUO-USERNAME/solana-token-generator.git
+cd solana-token-generator
+
+# Installa dipendenze frontend
+cd gui
+npm install
+
+# Installa dipendenze backend
+cd ../solana-backend
 npm install
 ```
 
-## 🦄 Integrazione Phantom Wallet
-
-### 🚀 **INTEGRAZIONE COMPLETA DISPONIBILE!**
-
-Ho implementato un sistema di integrazione sicura con Phantom che **NON richiede mai seed phrase o chiavi private**.
-
-### ⚡ Avvio Rapido
-
-#### 🎯 **App Completa con GUI Integrata** (Raccomandato)
+### Avvio Locale
 ```bash
-# Avvia l'intera applicazione con Phantom integrato
-npm run start-app
-```
-**Accesso:**
-- 📱 **GUI React**: http://localhost:3001
-- 🦄 **Phantom Wallet**: http://localhost:3001/phantom-wallet
-- 🔧 **API Backend**: http://localhost:3000
-
-#### 🌐 **Solo Integrazione Web**
-```bash
-# Avvia integrazione web (server + browser)
-npm run phantom-integration
-
-# Solo server backend
-npm run phantom-server
-
-# Guida completa integrazione
-npm run phantom-guide
-```
-
-### 🔐 Caratteristiche di Sicurezza
-
-✅ **Connessione browser diretta** - Phantom mantiene il controllo  
-✅ **Nessuna seed phrase richiesta** - Mai condivisa  
-✅ **Solo indirizzi pubblici salvati** - Zero rischi  
-✅ **Approvazione transazioni** - Controllo completo utente  
-✅ **Network selection** - Devnet/Mainnet supportati  
-
-### 🌐 Interfaccia Web Inclusa
-
-- **Connessione Phantom** con un click
-- **Monitoraggio saldo** in tempo reale
-- **Airdrop Devnet** per test gratuiti
-- **Salvataggio configurazione** sicura
-- **Gestione network** Devnet/Mainnet
-
-### 📖 Configurazione Tradizionale (Opzionale)
-
-Se preferisci la configurazione manuale:
-
-```bash
-# Guida completa
-npm run wallet-guide
-
-# Configuratore interattivo
-npm run configure-wallet
-```
-
-### Opzioni Disponibili:
-1. **Solo Monitoraggio** (SICURO) - Inserisci solo l'indirizzo pubblico
-2. **Controllo Completo** (RISCHIO) - Inserisci la chiave privata
-3. **Wallet Dedicato** (CONSIGLIATO) - Crea un nuovo wallet per test
-
-## 🎯 Utilizzo
-
-```bash
-# Avvia il sistema
+# Avvia backend (terminale 1)
+cd solana-backend
 npm start
 
-# Esegui i test
-npm test
-
-# Genera una nuova keypair
-npm run setup
-
-# Modalità sviluppo
-npm run dev
+# Avvia frontend (terminale 2)
+cd gui
+npm start
 ```
 
-## ⚙️ Configurazione Avanzata
+## 🌐 Deployment Gratuito
 
-### Parametri Principali (.env)
-```env
-# Liquidità totale da distribuire
-TOTAL_LIQUIDITY_EUR=100
+### Frontend (Vercel)
+1. Connetti repository a [Vercel](https://vercel.com)
+2. Configura `REACT_APP_API_URL`
+3. Deploy automatico
 
-# Range numero token per ciclo
-MIN_TOKENS=10
-MAX_TOKENS=50
+### Backend (Render)
+1. Connetti repository a [Render](https://render.com)
+2. Configura come Web Service
+3. Deploy automatico
 
-# DEX abilitati
-RAYDIUM_ENABLED=true
-ORCA_ENABLED=true
-SERUM_ENABLED=true
+**Costo totale: €0/mese**
 
-# Monitoraggio (5 minuti)
-MONITORING_INTERVAL_MS=300000
+## 📊 Funzionalità
 
-# Auto-correzione
-AUTO_FIX_ENABLED=true
-```
+### 🎯 Generazione Token
+- Creazione automatica token SPL
+- Verifica unicità nome/simbolo
+- Metadata e descrizioni AI-generated
+- Testing automatico pre-deploy
 
-### Configurazione DEX
-Il sistema distribuisce automaticamente la liquidità:
-- **Raydium**: 40% della liquidità totale
-- **Orca**: 35% della liquidità totale  
-- **Serum**: 25% della liquidità totale
+### 🔄 DEX Management
+- Listing automatico su DEX principali
+- Gestione liquidità
+- Monitoraggio prezzi
+- Analytics trading
 
-### Configurazione Token
-```env
-# Range supply token
-MIN_SUPPLY=1000000      # 1M
-MAX_SUPPLY=10000000000  # 10B
+### 🛡️ Sicurezza
+- Gestione sicura delle chiavi
+- Backup automatici
+- Audit trail completo
+- Error handling robusto
 
-# Range decimali
-MIN_DECIMALS=6
-MAX_DECIMALS=9
-```
+### 📈 Monitoraggio
+- Dashboard real-time
+- Metriche performance
+- Log dettagliati
+- Alerting automatico
 
-## 📊 Monitoraggio e Logging
+## 🔧 Configurazione
 
-### File di Log
-- `logs/token-generator-YYYY-MM-DD.log` - Log principale
-- `logs/operations-YYYY-MM-DD.log` - Operazioni importanti
-- `logs/errors-YYYY-MM-DD.log` - Solo errori
-
-### Directory Dati
-- `data/` - Dati token creati
-- `exports/` - Report esportati
-- `backups/` - Backup stato sistema
-
-### Statistiche in Tempo Reale
-Il sistema mostra:
-- 📈 Token creati per ciclo
-- 💰 Liquidità totale deployata
-- ✅ Tasso di successo operazioni
-- 🔧 Auto-fix applicati
-- ⏱️ Tempo medio per ciclo
-
-## 🔧 Auto-Correzione
-
-Il sistema rileva e corregge automaticamente:
-
-### Problemi Token
-- **Balance insufficiente**: Riminta automaticamente
-- **Trading inattivo**: Riattiva sui DEX
-- **Metadata corrotti**: Rigenera informazioni
-
-### Problemi DEX
-- **Connessione persa**: Riconnette automaticamente
-- **Pool non sani**: Applica correzioni
-- **Liquidità insufficiente**: Ribilancia
-
-### Problemi Sistema
-- **RPC disconnesso**: Cambia endpoint
-- **Rate limiting**: Aumenta pause
-- **Memoria elevata**: Ottimizza operazioni
-
-## 📈 Performance e Ottimizzazione
-
-### Metriche Tipiche
-- **Token/ora**: 20-100 (dipende da configurazione)
-- **Tasso successo**: >90% con auto-fix
-- **Tempo ciclo**: 5-15 minuti
-- **Uptime**: >99% con monitoraggio
-
-### Ottimizzazioni
-```env
-# Aumenta performance
-BATCH_SIZE=10
-CONCURRENT_OPERATIONS=5
-
-# Riduce pause
-RETRY_DELAY_MS=3000
-RATE_LIMIT_DELAY_MS=1000
-```
-
-## 🛡️ Sicurezza
-
-### Best Practices
-- ✅ Usa sempre devnet per test
-- ✅ Mantieni chiavi private sicure
-- ✅ Monitora balance wallet
-- ✅ Backup regolari configurazione
-- ✅ Limita liquidità totale
-
-### Limitazioni Sicurezza
-```env
-# Limiti automatici
-MAX_SUPPLY=10000000000  # Max 10B token
-TOTAL_LIQUIDITY_EUR=100 # Max €100
-MAX_RETRY_ATTEMPTS=3    # Max 3 tentativi
-```
-
-## 🐛 Troubleshooting
-
-### Problemi Comuni
-
-#### "Insufficient funds"
+### Variabili Ambiente
 ```bash
-# Verifica balance
-solana balance
+# Frontend (.env)
+REACT_APP_API_URL=http://localhost:3001
 
-# Richiedi airdrop (devnet)
-solana airdrop 1
-```
-
-#### "RPC connection failed"
-```env
-# Cambia RPC endpoint
+# Backend
+PORT=3001
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
-#### "Token name already exists"
-- Il sistema rileva automaticamente e rigenera
-- Controlla log per dettagli validazione
+### Configurazione Solana
+- Network: Mainnet Beta
+- RPC: Public endpoint
+- Wallet: Keypair generato automaticamente
 
-### Debug Mode
-```env
-# Abilita debug dettagliato
-NODE_ENV=development
-LOG_LEVEL=DEBUG
-```
+## 📚 Documentazione
 
-## 📁 Struttura del Progetto
+- [Guida Deployment](./DEPLOYMENT_SUMMARY.md)
+- [Script Deployment](./gui/deploy.md)
+- [Configurazione Phantom](./phantom-wallet-setup-guide.md)
+- [API Documentation](./solana-backend/README.md)
 
-- `index.js` - Entry point principale
-- `tokenGenerator.js` - Generatore di token SPL
-- `dexManager.js` - Gestione DEX e liquidità
-- `tokenValidator.js` - Validazione e controlli
-- `descriptionGenerator.js` - Generazione descrizioni
-- `logger.js` - Sistema di logging
-- `monitor.js` - Monitoraggio continuo
-- `configure-phantom-wallet.js` - Configuratore Phantom
-- `phantom-wallet-setup-guide.md` - Guida dettagliata
+## 🤝 Contributi
 
-## 🔐 Sicurezza
-
-### Wallet di Test (Default)
-Il sistema genera automaticamente una keypair per i test su Devnet.
-
-### Phantom Wallet (Produzione)
-Per usare il tuo wallet Phantom:
-1. Esegui `npm run configure-wallet`
-2. Scegli l'opzione più sicura per le tue esigenze
-3. Segui le istruzioni interattive
-
-### ⚠️ Importante
-- **MAI** condividere seed phrase o chiavi private
-- Usa wallet dedicati per test
-- Verifica sempre il network (Devnet/Mainnet)
-
-## 📊 Monitoraggio
-
-I log sono salvati nella cartella `logs/` e i report nella cartella `reports/`.
-
-## 🔄 Ciclo di Vita Sistema
-
-1. **Inizializzazione**
-   - Verifica prerequisiti
-   - Carica configurazione
-   - Testa connessioni
-
-2. **Generazione**
-   - Crea token unici
-   - Valida unicità
-   - Genera descrizioni
-
-3. **Distribuzione**
-   - Lista su DEX
-   - Aggiunge liquidità
-   - Verifica listing
-
-4. **Monitoraggio**
-   - Controlla salute
-   - Rileva problemi
-   - Applica correzioni
-
-5. **Reportistica**
-   - Salva dati
-   - Genera statistiche
-   - Backup stato
-
-## 📞 Supporto
-
-### Log e Debug
-- Controlla sempre i file di log in `logs/`
-- Usa `NODE_ENV=development` per debug
-- Verifica configurazione con `config.printConfiguration()`
-
-### Risorse Utili
-- [Solana Documentation](https://docs.solana.com/)
-- [SPL Token Guide](https://spl.solana.com/token)
-- [Raydium Docs](https://docs.raydium.io/)
-- [Orca Docs](https://docs.orca.so/)
-
-## ⚖️ Disclaimer
-
-⚠️ **IMPORTANTE**: Questo sistema è per scopi educativi e di sviluppo. 
-
-- Testa sempre su devnet prima di mainnet
-- Non investire più di quanto puoi permetterti di perdere
-- I token generati potrebbero non avere valore
-- Le criptovalute sono investimenti ad alto rischio
-- Rispetta sempre le leggi locali
+Il progetto è open source e accetta contributi:
+1. Fork del repository
+2. Crea feature branch
+3. Commit delle modifiche
+4. Push e Pull Request
 
 ## 📄 Licenza
 
-MIT License - Vedi file LICENSE per dettagli.
+MIT License - vedi [LICENSE](LICENSE) per dettagli.
+
+## 🆘 Supporto
+
+- **Issues**: Usa GitHub Issues per bug report
+- **Discussions**: GitHub Discussions per domande
+- **Documentation**: Wiki del progetto
+
+## 🎉 Roadmap
+
+- [ ] Integrazione più DEX
+- [ ] Mobile app
+- [ ] Advanced analytics
+- [ ] Multi-chain support
+- [ ] DAO governance completa
 
 ---
 
-🚀 **Buona generazione di token!** 🚀
+**🚀 Sistema completamente autonomo per la generazione di token SPL su Solana!**
+
+*Creato con ❤️ per la community Solana*
