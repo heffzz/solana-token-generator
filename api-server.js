@@ -329,17 +329,20 @@ async function getRealNetworkHealth() {
     const { Connection } = await import('@solana/web3.js');
     const connection = new Connection(config.SOLANA_RPC_URL, 'confirmed');
     
-    const health = await connection.getHealth();
+    // Usa getSlot() invece di getHealth() che non esiste
+    const slot = await connection.getSlot();
     const version = await connection.getVersion();
     const epochInfo = await connection.getEpochInfo();
     
+    const isHealthy = slot > 0;
+    
     return {
       totalChecks: Math.floor(Date.now() / 1000 / 60), // Checks ogni minuto
-      issues: health === 'ok' ? [] : ['Network degraded'],
+      issues: isHealthy ? [] : ['Network degraded'],
       networkVersion: version['solana-core'],
       currentEpoch: epochInfo.epoch,
       slotHeight: epochInfo.absoluteSlot,
-      health: health
+      health: isHealthy ? 'ok' : 'degraded'
     };
   } catch (error) {
     console.warn('Errore nel recupero health di rete:', error.message);

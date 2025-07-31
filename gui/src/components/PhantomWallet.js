@@ -107,21 +107,37 @@ const PhantomWallet = () => {
 
   // Ottieni saldo
   const getBalance = async (walletAddress = publicKey) => {
-    if (!walletAddress) return;
+    if (!walletAddress) {
+      console.log('Nessun indirizzo wallet fornito');
+      return;
+    }
+
+    // Validazione base58 per chiave pubblica Solana
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+    if (!base58Regex.test(walletAddress) || walletAddress.length < 32 || walletAddress.length > 44) {
+      setError('Indirizzo wallet non valido');
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
+      console.log(`Recupero saldo per: ${walletAddress} su rete: ${network}`);
+      
       // Usa il servizio API invece di fetch diretto
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/balance/${walletAddress}/${network}`);
       const data = await response.json();
       
       if (data.success) {
         setBalance(data.balance);
+        console.log(`Saldo recuperato: ${data.balance} SOL`);
       } else {
         setError('Errore nel recupero del saldo: ' + data.error);
+        console.error('Errore API:', data.error);
       }
     } catch (err) {
       setError('Errore di connessione al server: ' + err.message);
+      console.error('Errore fetch:', err);
     } finally {
       setLoading(false);
     }
@@ -129,11 +145,22 @@ const PhantomWallet = () => {
 
   // Richiedi airdrop (solo devnet)
   const requestAirdrop = async () => {
-    if (!publicKey || network !== 'devnet') return;
+    if (!publicKey || network !== 'devnet') {
+      setError('Airdrop disponibile solo su devnet con wallet connesso');
+      return;
+    }
+
+    // Validazione base58 per chiave pubblica Solana
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+    if (!base58Regex.test(publicKey) || publicKey.length < 32 || publicKey.length > 44) {
+      setError('Indirizzo wallet non valido per airdrop');
+      return;
+    }
 
     try {
       setAirdropLoading(true);
       setError(null);
+      console.log(`Richiesta airdrop per: ${publicKey}`);
       
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/airdrop`, {
         method: 'POST',
@@ -146,6 +173,7 @@ const PhantomWallet = () => {
       const data = await response.json();
       
       if (data.success) {
+        console.log('Airdrop completato:', data.signature);
         // Aggiorna il saldo dopo l'airdrop
         setTimeout(() => getBalance(), 2000);
       } else {
