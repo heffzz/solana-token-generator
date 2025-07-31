@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -254,10 +254,11 @@ app.get('/api/config', (req, res) => {
 });
 
 // Avvia il server
-app.listen(PORT, () => {
-  console.log(`🚀 Server API avviato su porta ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server backend avviato su porta ${PORT}`);
   console.log(`📡 Connesso a Solana: ${SOLANA_RPC_URL}`);
-  console.log(`🔗 API disponibili su http://localhost:${PORT}/api`);
+  console.log(`📊 API disponibili su http://localhost:${PORT}/api`);
+  console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Gestione errori
