@@ -63,7 +63,7 @@ async function getRealSolanaTokens() {
     
     // Se non abbiamo API key, usa direttamente i token di fallback
     if (!SOLSCAN_API_KEY) {
-      console.log('ℹ️  SOLSCAN_API_KEY non configurata, usando token predefiniti');
+      console.log('✅ Modalità fallback attiva - usando token predefiniti (normale in ambiente di produzione)');
       return await getFallbackTokens();
     }
     
@@ -152,7 +152,7 @@ async function getRealSolanaTokens() {
         }
       }
       
-      console.log('💡 Suggerimento: Verifica la configurazione SOLSCAN_API_KEY su Render');
+      console.log('💡 Info: Per dati token in tempo reale, configura SOLSCAN_API_KEY su Render (opzionale)');
     }
     
     // Fallback ai token principali se Solscan non è disponibile

@@ -58,7 +58,7 @@ NODE_ENV=development
 # Configurazione CORS
 CORS_ORIGIN=http://localhost:3000
 
-# Configurazione Solscan API
+# Configurazione Solscan API (opzionale - se non configurata usa dati predefiniti)
 SOLSCAN_API_KEY=your_solscan_api_key_here
 SOLSCAN_BASE_URL=https://pro-api.solscan.io/v2.0
 

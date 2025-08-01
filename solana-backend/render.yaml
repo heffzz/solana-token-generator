@@ -28,7 +28,9 @@ services:
       - key: CACHE_ENABLED
         value: true
     # IMPORTANTE: Configura manualmente nel dashboard Render:
-    # SOLSCAN_API_KEY - Obbligatoria per dati token reali (evita errore 401)
+    # SOLSCAN_API_KEY - Opzionale per dati token in tempo reale
+    # Se non configurata, il sistema usa automaticamente token predefiniti
+    # Per configurarla manualmente nel dashboard Render:
     #   1. Vai su https://pro-api.solscan.io/ e registrati
     #   2. Ottieni la tua API key
     #   3. Aggiungila come variabile d'ambiente su Render
