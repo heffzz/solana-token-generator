@@ -28,9 +28,9 @@ app.use(express.json());
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
-// Configurazione API con fallback
-const SOLSCAN_API_KEY = process.env.SOLSCAN_API_KEY || null;
-const SOLSCAN_BASE_URL = process.env.SOLSCAN_BASE_URL || 'https://pro-api.solscan.io/v2.0';
+// Configurazione API Helius
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY || null;
+const HELIUS_RPC_URL = process.env.HELIUS_RPC_URL || 'https://mainnet.helius-rpc.com';
 const API_RATE_LIMIT_DELAY = parseInt(process.env.API_RATE_LIMIT_DELAY) || 100;
 const API_REQUEST_TIMEOUT = parseInt(process.env.API_REQUEST_TIMEOUT) || 10000;
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 300000;
@@ -59,90 +59,113 @@ let systemState = {
 // Funzioni per ottenere dati reali da Solana
 async function getRealSolanaTokens() {
   try {
-    const realTokens = [];
-    
-    // Se non abbiamo API key, usa direttamente i token di fallback
-    if (!SOLSCAN_API_KEY) {
-      console.log('✅ Modalità fallback attiva - usando token predefiniti (normale in ambiente di produzione)');
-      return await getFallbackTokens();
-    }
-
-    console.log('🔑 Tentativo di connessione all\'API Solscan con chiave JWT...');
-    
-    // Ottieni token reali usando l'API Solscan
-    try {
-      const headers = {
-        'token': SOLSCAN_API_KEY,
-        'User-Agent': 'Solana-Token-Backend/1.0.0'
-      };
-      
-      const solscanResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/list?sort_by=market_cap&sort_order=desc&page=1&page_size=10`, {
-        headers,
-        timeout: API_REQUEST_TIMEOUT
-      });
-      
-      if (solscanResponse.data && solscanResponse.data.data) {
-        const topTokens = solscanResponse.data.data.slice(0, 8); // Prendi i primi 8 token per market cap
-        
-        for (const token of topTokens) {
-          try {
-            const tokenData = {
-              address: token.address,
-              name: token.name || token.symbol,
-              symbol: token.symbol,
-              decimals: token.decimals || 9,
-              supply: 0, // Non disponibile nell'endpoint list
-              listed: true,
-              tradingActive: true,
-              createdAt: token.created_time ? token.created_time * 1000 : Date.now(), // Converti da Unix timestamp
-              marketCap: token.market_cap || 0,
-              price: token.price || 0,
-              volume24h: 0, // Non disponibile nell'endpoint list
-              priceChange24h: token.price_24h_change || 0,
-              holders: token.holder || 0
-            };
-            
-            realTokens.push(tokenData);
-          } catch (tokenError) {
-            console.error(`Errore nel processare token ${token.address}:`, tokenError.message);
-          }
-          
-          // Aggiungi un piccolo delay per evitare rate limiting
-          await new Promise(resolve => setTimeout(resolve, API_RATE_LIMIT_DELAY));
+    // Usa Helius se disponibile
+    if (HELIUS_API_KEY) {
+      console.log('🔑 Connessione all\'API Helius...');
+      try {
+        const heliusTokens = await getTokensFromHelius();
+        if (heliusTokens && heliusTokens.length > 0) {
+          console.log(`✅ Recuperati ${heliusTokens.length} token reali da Helius`);
+          return heliusTokens;
         }
-        
-        if (realTokens.length > 0) {
-          console.log(`✅ Recuperati ${realTokens.length} token reali da Solscan`);
-          return realTokens;
-        }
+      } catch (heliusError) {
+        console.error('Errore nell\'API Helius:', heliusError.message);
+        console.log('⚠️ Fallback a token predefiniti...');
       }
-    } catch (solscanError) {
-      console.error('Errore nell\'API Solscan:', solscanError.message);
-      
-      if (solscanError.response) {
-        const status = solscanError.response.status;
-        if (status === 401) {
-          console.log('❌ API Key Solscan scaduta o non valida (401)');
-          console.log('🔄 La chiave JWT deve essere rigenerata dal tuo account Solscan');
-          console.log('📋 Vai su solscan.io > Account > API Management > Generate Key');
-        } else if (status === 429) {
-          console.error('⚠️  Rate limit raggiunto per API Solscan');
-        } else if (status === 403) {
-          console.error('❌ Accesso negato all\'API Solscan');
-        } else {
-          console.error(`❌ Errore HTTP ${status} dall\'API Solscan`);
-        }
-      }
-      
-      console.log('💡 Usando token predefiniti come fallback...');
+    } else {
+      console.log('⚠️ Nessuna API key Helius configurata');
     }
     
-    // Fallback ai token principali se Solscan non è disponibile
-    console.log('⚠️  Usando token di fallback (Solscan non disponibile)');
+    // Fallback ai token principali se Helius non è disponibile
+    console.log('⚠️  Usando token di fallback (Helius non disponibile)');
     return await getFallbackTokens();
   } catch (error) {
     console.error('Errore nel recupero token Solana:', error);
     return await getFallbackTokens();
+  }
+}
+
+// Funzione per ottenere token da Helius
+async function getTokensFromHelius() {
+  try {
+    // Lista di token popolari su Solana da interrogare
+    const popularTokens = [
+      'So11111111111111111111111111111111111111112', // Wrapped SOL
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+      'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
+      'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL
+      'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', // ORCA
+      'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a'  // RLB
+    ];
+    
+    const tokens = [];
+    
+    for (const tokenAddress of popularTokens) {
+      try {
+        // Usa l'API DAS di Helius per ottenere informazioni sul token
+        const response = await axios.post(`${HELIUS_RPC_URL}/?api-key=${HELIUS_API_KEY}`, {
+          jsonrpc: '2.0',
+          id: 'helius-token-info',
+          method: 'getAsset',
+          params: {
+            id: tokenAddress,
+            displayOptions: {
+              showFungibleTokens: true
+            }
+          }
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: API_REQUEST_TIMEOUT
+        });
+        
+        if (response.data && response.data.result) {
+          const tokenInfo = response.data.result;
+          const tokenData = {
+            address: tokenAddress,
+            name: tokenInfo.name || tokenInfo.symbol,
+            symbol: tokenInfo.symbol,
+            decimals: tokenInfo.token_info?.decimals || 9,
+            supply: tokenInfo.token_info?.supply || 0,
+            listed: true,
+            tradingActive: true,
+            createdAt: Date.now(), // Non disponibile direttamente da Helius
+            marketCap: 0,
+            price: 0,
+            volume24h: 0,
+            priceChange24h: 0,
+            holders: 0
+          };
+          
+          // Se disponibili, aggiungi informazioni sul prezzo
+          if (tokenInfo.token_info?.price_info) {
+            tokenData.price = tokenInfo.token_info.price_info.price_per_token || 0;
+            
+            // Calcola market cap se abbiamo prezzo e supply
+            if (tokenData.price > 0 && tokenData.supply > 0) {
+              const adjustedSupply = tokenData.supply / Math.pow(10, tokenData.decimals);
+              tokenData.marketCap = tokenData.price * adjustedSupply;
+            }
+          }
+          
+          tokens.push(tokenData);
+        }
+        
+        // Aggiungi un piccolo delay per evitare rate limiting
+        await new Promise(resolve => setTimeout(resolve, API_RATE_LIMIT_DELAY));
+      } catch (error) {
+        console.error(`Errore nel recupero dati per token ${tokenAddress} da Helius:`, error.message);
+      }
+    }
+    
+    // Ordina i token per market cap (se disponibile)
+    return tokens.sort((a, b) => b.marketCap - a.marketCap);
+  } catch (error) {
+    console.error('Errore nel recupero token da Helius:', error);
+    throw error;
   }
 }
 
