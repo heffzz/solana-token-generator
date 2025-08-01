@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node --expose-gc api-server.js
     healthCheckPath: /api/system/health
     envVars:
       - key: NODE_ENV

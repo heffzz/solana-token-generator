@@ -4,8 +4,8 @@
   "description": "Backend API per sistema autonomo di generazione token SPL su Solana",
   "main": "api-server.js",
   "scripts": {
-    "start": "node api-server.js",
-    "dev": "nodemon api-server.js",
+    "start": "node --expose-gc api-server.js",
+    "dev": "nodemon --expose-gc api-server.js",
     "build": "echo 'Build completed'",
     "test": "echo 'No tests specified'",
     "deploy:vercel": "vercel --prod",
