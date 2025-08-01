@@ -16,7 +16,13 @@
     "SOLANA_RPC_URL": "https://api.mainnet-beta.solana.com",
     "SOLANA_NETWORK": "mainnet-beta",
     "NODE_ENV": "production",
-    "CORS_ORIGIN": "*"
+    "CORS_ORIGIN": "*",
+    "HELIUS_API_KEY": "008bc3bb-6a88-4449-aa0a-a52fe5a0dedf",
+    "HELIUS_RPC_URL": "https://mainnet.helius-rpc.com",
+    "API_RATE_LIMIT_DELAY": "100",
+    "API_REQUEST_TIMEOUT": "10000",
+    "CACHE_TTL": "300000",
+    "CACHE_ENABLED": "true"
   },
   "functions": {
     "api-server.js": {

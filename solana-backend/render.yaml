@@ -17,8 +17,10 @@ services:
         value: mainnet-beta
       - key: CORS_ORIGIN
         value: "*"
-      - key: SOLSCAN_BASE_URL
-        value: https://pro-api.solscan.io/v2.0
+      - key: HELIUS_API_KEY
+        value: 008bc3bb-6a88-4449-aa0a-a52fe5a0dedf
+      - key: HELIUS_RPC_URL
+        value: https://mainnet.helius-rpc.com
       - key: API_RATE_LIMIT_DELAY
         value: 100
       - key: API_REQUEST_TIMEOUT
@@ -27,8 +29,6 @@ services:
         value: 300000
       - key: CACHE_ENABLED
         value: true
-      - key: SOLSCAN_API_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTQwNTY3NjAzNDYsImVtYWlsIjoibHVjYTY4NTRAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzU0MDU2NzYwfQ.MA63CzDwnsKv_SrcZHdy5df8QUb0Ss_eDOgtj9pnjCE
     # Variabili opzionali:
     # GITHUB_TOKEN - per integrazione GitHub
     # VERCEL_TOKEN - per deploy Vercel
