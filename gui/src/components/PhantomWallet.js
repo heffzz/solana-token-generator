@@ -281,7 +281,7 @@ const PhantomWallet = () => {
             onChange={handleNetworkChange}
           >
             <MenuItem value="devnet">Devnet (Test)</MenuItem>
-            <MenuItem value="mainnet-beta">Mainnet (Produzione)</MenuItem>
+            <MenuItem value="mainnet">Mainnet (Produzione)</MenuItem>
           </Select>
         </FormControl>
 
