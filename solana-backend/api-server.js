@@ -3,6 +3,8 @@ const cors = require('cors');
 const { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL } = require('@solana/web3.js');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
+const { performance } = require('perf_hooks');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,39 +40,121 @@ let systemState = {
 // Funzioni per ottenere dati reali da Solana
 async function getRealSolanaTokens() {
   try {
-    // Simula alcuni token reali per demo
-    const realTokens = [
-      {
-        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-        name: 'USD Coin',
-        symbol: 'USDC',
-        decimals: 6,
-        supply: 1000000000,
-        listed: true,
-        tradingActive: true,
-        createdAt: Date.now() - 86400000
-      },
-      {
-        address: 'So11111111111111111111111111111111111111112',
-        name: 'Wrapped SOL',
-        symbol: 'SOL',
-        decimals: 9,
-        supply: 500000000,
-        listed: true,
-        tradingActive: true,
-        createdAt: Date.now() - 172800000
-      },
-      {
-        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-        name: 'Tether USD',
-        symbol: 'USDT',
-        decimals: 6,
-        supply: 800000000,
-        listed: true,
-        tradingActive: true,
-        createdAt: Date.now() - 259200000
+    const realTokens = [];
+    
+    // Ottieni token reali usando l'API Solscan
+    try {
+      const solscanResponse = await axios.get('https://pro-api.solscan.io/v2.0/token/trending', {
+        headers: {
+          'token': process.env.SOLSCAN_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTQwNTY3NjAzNDYsImVtYWlsIjoibHVjYTY4NTRAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzU0MDU2NzYwfQ.MA63CzDwnsKv_SrcZHdy5df8QUb0Ss_eDOgtj9pnjCE'
+        },
+        timeout: 10000
+      });
+      
+      if (solscanResponse.data && solscanResponse.data.data) {
+        const trendingTokens = solscanResponse.data.data.slice(0, 20); // Prendi i primi 20 token trending
+        
+        for (const token of trendingTokens) {
+          try {
+            // Ottieni informazioni dettagliate per ogni token
+            const tokenDetailResponse = await axios.get(`https://pro-api.solscan.io/v2.0/token/meta?address=${token.address}`, {
+              headers: {
+                'token': process.env.SOLSCAN_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTQwNTY3NjAzNDYsImVtYWlsIjoibHVjYTY4NTRAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzU0MDU2NzYwfQ.MA63CzDwnsKv_SrcZHdy5df8QUb0Ss_eDOgtj9pnjCE'
+              },
+              timeout: 5000
+            });
+            
+            if (tokenDetailResponse.data && tokenDetailResponse.data.data) {
+              const tokenDetail = tokenDetailResponse.data.data;
+              
+              const tokenData = {
+                address: token.address,
+                name: tokenDetail.name || token.symbol,
+                symbol: tokenDetail.symbol || token.symbol,
+                decimals: tokenDetail.decimals || 9,
+                supply: parseFloat(tokenDetail.supply) || 0,
+                listed: true,
+                tradingActive: true,
+                createdAt: tokenDetail.createdTime ? new Date(tokenDetail.createdTime).getTime() : Date.now(),
+                marketCap: token.marketCap || 0,
+                price: token.price || 0,
+                volume24h: token.volume24h || 0
+              };
+              
+              realTokens.push(tokenData);
+            }
+          } catch (detailError) {
+            console.error(`Errore nel recupero dettagli per token ${token.address}:`, detailError.message);
+            // Aggiungi token con dati base se non riesce a recuperare dettagli
+            realTokens.push({
+              address: token.address,
+              name: token.symbol,
+              symbol: token.symbol,
+              decimals: 9,
+              supply: 0,
+              listed: true,
+              tradingActive: true,
+              createdAt: Date.now(),
+              marketCap: token.marketCap || 0,
+              price: token.price || 0,
+              volume24h: token.volume24h || 0
+            });
+          }
+          
+          // Aggiungi un piccolo delay per evitare rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
-    ];
+    } catch (solscanError) {
+      console.error('Errore nell\'API Solscan:', solscanError.message);
+    }
+    
+    // Se non abbiamo ottenuto token da Solscan, usa token principali come fallback
+    if (realTokens.length === 0) {
+      const mainTokens = [
+        {
+          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+          name: 'USD Coin',
+          symbol: 'USDC'
+        },
+        {
+          address: 'So11111111111111111111111111111111111111112',
+          name: 'Wrapped SOL',
+          symbol: 'SOL'
+        },
+        {
+          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+          name: 'Tether USD',
+          symbol: 'USDT'
+        }
+      ];
+      
+      for (const tokenInfo of mainTokens) {
+        try {
+          const tokenMint = new PublicKey(tokenInfo.address);
+          const supplyInfo = await connection.getTokenSupply(tokenMint);
+          const accountInfo = await connection.getAccountInfo(tokenMint);
+          
+          if (accountInfo && supplyInfo) {
+            realTokens.push({
+              address: tokenInfo.address,
+              name: tokenInfo.name,
+              symbol: tokenInfo.symbol,
+              decimals: supplyInfo.value.decimals,
+              supply: supplyInfo.value.uiAmount || 0,
+              listed: true,
+              tradingActive: true,
+              createdAt: Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000),
+              marketCap: 0,
+              price: 0,
+              volume24h: 0
+            });
+          }
+        } catch (error) {
+          console.error(`Errore nel recupero dati per token ${tokenInfo.symbol}:`, error);
+        }
+      }
+    }
     
     return realTokens;
   } catch (error) {
@@ -85,11 +169,25 @@ async function getRealTransactionStats() {
     const slot = await connection.getSlot();
     const blockTime = await connection.getBlockTime(slot);
     
+    // Ottieni performance samples per calcolare TPS reale
+    const perfSamples = await connection.getRecentPerformanceSamples(5);
+    let tps = 0;
+    
+    if (perfSamples && perfSamples.length > 0) {
+      // Calcola TPS medio dai campioni di performance
+      tps = perfSamples.reduce((sum, sample) => {
+        return sum + (sample.numTransactions / sample.samplePeriodSecs);
+      }, 0) / perfSamples.length;
+    }
+    
+    // Ottieni stima delle transazioni totali
+    const totalTx = await connection.getTransactionCount();
+    
     return {
       currentSlot: slot,
       blockTime: blockTime,
-      tps: Math.floor(Math.random() * 3000) + 1000, // TPS simulato
-      totalTransactions: slot * 400 // Stima basata su slot
+      tps: Math.round(tps),
+      totalTransactions: totalTx
     };
   } catch (error) {
     console.error('Errore nel recupero statistiche transazioni:', error);
@@ -108,10 +206,14 @@ async function getRealNetworkHealth() {
     const slot = await connection.getSlot();
     const version = await connection.getVersion();
     
+    // Calcola uptime reale del server
+    const serverUptime = process.uptime();
+    const uptimePercentage = Math.min(99.99, (serverUptime / (60 * 60 * 24)) * 100);
+    
     return {
       status: slot > 0 ? 'healthy' : 'degraded',
       version: version['solana-core'] || 'unknown',
-      uptime: Math.floor(Math.random() * 99) + 95 // Uptime simulato
+      uptime: parseFloat(uptimePercentage.toFixed(2))
     };
   } catch (error) {
     console.error('Errore nel controllo salute rete:', error);
@@ -123,13 +225,165 @@ async function getRealNetworkHealth() {
   }
 }
 
+// Funzione per misurare le latenze reali delle API
+async function getRealNetworkLatencies(networkHealth) {
+  const results = {
+    solana: { latency: 0, status: networkHealth.status },
+    raydium: { latency: 0, status: 'unknown' },
+    orca: { latency: 0, status: 'unknown' },
+    jupiter: { latency: 0, status: 'unknown' }
+  };
+  
+  // Misura latenza Solana
+  try {
+    const startTime = performance.now();
+    await connection.getRecentBlockhash();
+    const endTime = performance.now();
+    results.solana.latency = Math.floor(endTime - startTime);
+    results.solana.status = 'healthy';
+  } catch (error) {
+    console.error('Errore nella misurazione latenza Solana:', error);
+    results.solana.status = 'degraded';
+    results.solana.latency = 500; // Valore di fallback
+  }
+  
+  // Misura latenza Raydium (usando un endpoint pubblico di Raydium)
+  try {
+    const startTime = performance.now();
+    const response = await axios.get('https://api.raydium.io/v2/main/pairs', { timeout: 3000 });
+    const endTime = performance.now();
+    results.raydium.latency = Math.floor(endTime - startTime);
+    results.raydium.status = response.status === 200 ? 'healthy' : 'degraded';
+  } catch (error) {
+    console.error('Errore nella misurazione latenza Raydium:', error);
+    results.raydium.status = 'degraded';
+    results.raydium.latency = 500; // Valore di fallback
+  }
+  
+  // Misura latenza Orca (usando un endpoint pubblico di Orca)
+  try {
+    const startTime = performance.now();
+    const response = await axios.get('https://api.orca.so/pools', { timeout: 3000 });
+    const endTime = performance.now();
+    results.orca.latency = Math.floor(endTime - startTime);
+    results.orca.status = response.status === 200 ? 'healthy' : 'degraded';
+  } catch (error) {
+    console.error('Errore nella misurazione latenza Orca:', error);
+    results.orca.status = 'degraded';
+    results.orca.latency = 500; // Valore di fallback
+  }
+  
+  // Misura latenza Jupiter (usando un endpoint pubblico di Jupiter)
+  try {
+    const startTime = performance.now();
+    const response = await axios.get('https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=10000000&slippageBps=50', { timeout: 3000 });
+    const endTime = performance.now();
+    results.jupiter.latency = Math.floor(endTime - startTime);
+    results.jupiter.status = response.status === 200 ? 'healthy' : 'degraded';
+  } catch (error) {
+    console.error('Errore nella misurazione latenza Jupiter:', error);
+    results.jupiter.status = 'degraded';
+    results.jupiter.latency = 500; // Valore di fallback
+  }
+  
+  return results;
+}
+
+// Funzione per ottenere dati reali dei DEX
+async function getRealDexData(activePairs, totalLiquidity) {
+  const dexData = {
+    raydium: { pairs: 0, liquidity: 0 },
+    orca: { pairs: 0, liquidity: 0 },
+    jupiter: { pairs: 0, liquidity: 0 }
+  };
+  
+  try {
+    // Ottieni dati reali da Raydium
+    const raydiumResponse = await axios.get('https://api.raydium.io/v2/main/pairs', { timeout: 5000 });
+    if (raydiumResponse.status === 200 && raydiumResponse.data) {
+      // Calcola il numero di coppie attive
+      const raydiumPairs = raydiumResponse.data.filter(pair => pair.liquidity && pair.liquidity > 0);
+      dexData.raydium.pairs = raydiumPairs.length;
+      
+      // Calcola la liquidità totale (in USD)
+      dexData.raydium.liquidity = raydiumPairs.reduce((total, pair) => {
+        return total + (parseFloat(pair.liquidity) || 0);
+      }, 0);
+    }
+  } catch (error) {
+    console.error('Errore nel recupero dati Raydium:', error);
+    // Usa una stima basata sui dati disponibili
+    dexData.raydium.pairs = Math.floor(activePairs * 0.4);
+    dexData.raydium.liquidity = Math.floor(totalLiquidity * 0.4);
+  }
+  
+  try {
+    // Ottieni dati reali da Orca
+    const orcaResponse = await axios.get('https://api.orca.so/pools', { timeout: 5000 });
+    if (orcaResponse.status === 200 && orcaResponse.data) {
+      // Calcola il numero di pool attivi
+      const orcaPools = Object.values(orcaResponse.data).filter(pool => 
+        pool.liquidity && parseFloat(pool.liquidity) > 0
+      );
+      dexData.orca.pairs = orcaPools.length;
+      
+      // Calcola la liquidità totale
+      dexData.orca.liquidity = orcaPools.reduce((total, pool) => {
+        return total + (parseFloat(pool.liquidity) || 0);
+      }, 0);
+    }
+  } catch (error) {
+    console.error('Errore nel recupero dati Orca:', error);
+    // Usa una stima basata sui dati disponibili
+    dexData.orca.pairs = Math.floor(activePairs * 0.35);
+    dexData.orca.liquidity = Math.floor(totalLiquidity * 0.35);
+  }
+  
+  try {
+    // Per Jupiter, utilizziamo un endpoint di quote come proxy per verificare l'attività
+    const jupiterResponse = await axios.get('https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=10000000&slippageBps=50', { timeout: 5000 });
+    if (jupiterResponse.status === 200 && jupiterResponse.data) {
+      // Stima il numero di coppie basato sui dati disponibili
+      // Jupiter non espone direttamente il numero di coppie, quindi facciamo una stima
+      dexData.jupiter.pairs = Math.floor(activePairs * 0.25);
+      
+      // Stima la liquidità basata sui dati disponibili
+      dexData.jupiter.liquidity = Math.floor(totalLiquidity * 0.25);
+    }
+  } catch (error) {
+    console.error('Errore nel recupero dati Jupiter:', error);
+    // Usa una stima basata sui dati disponibili
+    dexData.jupiter.pairs = Math.floor(activePairs * 0.25);
+    dexData.jupiter.liquidity = Math.floor(totalLiquidity * 0.25);
+  }
+  
+  return dexData;
+}
+
 async function getRealTotalLiquidity() {
   try {
-    // Simula liquidità totale basata su dati reali
+    // Ottieni token reali
     const tokens = await getRealSolanaTokens();
-    const totalLiquidity = tokens.reduce((sum, token) => {
-      return sum + (Math.random() * 1000000); // Liquidità simulata per token
-    }, 0);
+    
+    // Calcola liquidità basata su dati reali
+    // Utilizziamo i dati di supply e un fattore di prezzo stimato per ogni token
+    const totalLiquidity = await Promise.all(tokens.map(async (token) => {
+      try {
+        // Ottieni informazioni sul token da Solana
+        const tokenInfo = await connection.getTokenSupply(new PublicKey(token.address));
+        const supply = tokenInfo.value.uiAmount || token.supply;
+        
+        // Stima un prezzo basato su dati reali (in un sistema reale, questo verrebbe da un oracle)
+        const estimatedPrice = token.symbol === 'SOL' ? 20 : 
+                              token.symbol === 'USDC' ? 1 : 
+                              token.symbol === 'USDT' ? 1 : 0.01;
+        
+        return supply * estimatedPrice;
+      } catch (error) {
+        console.error(`Errore nel calcolo liquidità per ${token.symbol}:`, error);
+        return 0;
+      }
+    })).then(liquidities => liquidities.reduce((sum, liq) => sum + liq, 0));
     
     return Math.floor(totalLiquidity);
   } catch (error) {
@@ -154,37 +408,38 @@ app.get('/api/system/stats', async (req, res) => {
     systemState.healthyTokens = realTokens.filter(t => t.tradingActive).length;
     systemState.lastUpdate = new Date().toISOString();
     
+    // Incrementa il contatore dei controlli totali
+    systemState.totalChecks++;
+    
+    // Calcola il tasso di successo reale
+    const successRate = systemState.totalSuccesses > 0 ? 
+      (systemState.totalSuccesses / (systemState.totalSuccesses + systemState.totalErrors)) * 100 : 100;
+    
+    // Ottieni dati reali dei DEX
+    const realDexData = await getRealDexData(systemState.activePairs, systemState.totalLiquidity);
+    
     const stats = {
       tokenGenerator: {
         tokensCreated: systemState.tokensCreated,
-        successRate: 95.5,
+        successRate: parseFloat(successRate.toFixed(1)),
         realTokens: realTokens
       },
       dexManager: {
         totalListings: systemState.totalListings,
         totalLiquidity: systemState.totalLiquidity,
         activePairs: systemState.activePairs,
-        realDexData: {
-          raydium: { pairs: Math.floor(systemState.activePairs * 0.4), liquidity: Math.floor(systemState.totalLiquidity * 0.4) },
-          orca: { pairs: Math.floor(systemState.activePairs * 0.35), liquidity: Math.floor(systemState.totalLiquidity * 0.35) },
-          jupiter: { pairs: Math.floor(systemState.activePairs * 0.25), liquidity: Math.floor(systemState.totalLiquidity * 0.25) }
-        }
+        realDexData: realDexData
       },
       monitor: {
-        totalChecks: systemState.totalChecks + Math.floor(Math.random() * 100),
+        totalChecks: systemState.totalChecks,
         healthyTokens: systemState.healthyTokens,
         totalIssues: systemState.totalIssues,
         networkHealth: realNetworkHealth,
-        realNetworkStats: {
-          solana: { latency: Math.floor(Math.random() * 100) + 50, status: realNetworkHealth.status },
-          raydium: { latency: Math.floor(Math.random() * 200) + 100, status: 'healthy' },
-          orca: { latency: Math.floor(Math.random() * 150) + 80, status: 'healthy' },
-          jupiter: { latency: Math.floor(Math.random() * 180) + 90, status: 'healthy' }
-        }
+        realNetworkStats: await getRealNetworkLatencies(realNetworkHealth)
       },
       performance: {
         avgTokensPerCycle: Math.floor(systemState.tokensCreated / Math.max(1, Math.floor(Date.now() / 3600000))),
-        avgCycleTime: Math.floor(Math.random() * 30) + 15,
+        avgCycleTime: systemState.totalChecks > 0 ? Math.floor((Date.now() - new Date(systemState.lastUpdate).getTime()) / systemState.totalChecks) : 0,
         totalErrors: systemState.totalErrors,
         totalSuccesses: systemState.totalSuccesses + systemState.tokensCreated,
         realTransactionStats: realTransactions

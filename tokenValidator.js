@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Logger } from './logger.js';
+import { config } from './config.js';
 
 export class TokenValidator {
     constructor() {
@@ -7,6 +8,7 @@ export class TokenValidator {
         this.checkedTokens = new Set();
         this.solscanBaseUrl = 'https://public-api.solscan.io';
         this.jupiterBaseUrl = 'https://quote-api.jup.ag/v6';
+        this.solscanApiKey = config.SOLSCAN_API_KEY;
     }
 
     async validateUniqueness(name, symbol) {
@@ -52,7 +54,8 @@ export class TokenValidator {
                 {
                     timeout: 5000,
                     headers: {
-                        'User-Agent': 'TokenGenerator/1.0'
+                        'User-Agent': 'TokenGenerator/1.0',
+                        'token': this.solscanApiKey
                     }
                 }
             );

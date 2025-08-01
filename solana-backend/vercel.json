@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api-server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api-server.js"
+    }
+  ],
+  "env": {
+    "SOLANA_RPC_URL": "https://api.mainnet-beta.solana.com",
+    "SOLANA_NETWORK": "mainnet-beta",
+    "NODE_ENV": "production",
+    "CORS_ORIGIN": "*"
+  },
+  "functions": {
+    "api-server.js": {
+      "maxDuration": 30
+    }
+  }
+}

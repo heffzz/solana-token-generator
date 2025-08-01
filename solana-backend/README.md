@@ -1,56 +1,127 @@
-# Solana Token Backend API
+# Solana Token Dashboard - Backend API
 
-Backend API per il sistema autonomo di generazione token SPL su Solana.
+🚀 **Sistema autonomo di generazione e monitoraggio token SPL su Solana**
 
-## Caratteristiche
+Questo backend fornisce API complete per la creazione, monitoraggio e gestione di token SPL sulla blockchain Solana, con integrazione di dati reali tramite API Solscan e connessione diretta alla rete Solana.
 
-- API REST per statistiche sistema
-- Integrazione con Solana mainnet
-- Monitoraggio salute rete
-- Gestione log e configurazione
-- CORS abilitato per frontend
+## 🌟 Caratteristiche Principali
 
-## Endpoints API
+### 📊 Dati Reali in Tempo Reale
+- **Token Trending**: Recupero automatico dei token più popolari tramite API Solscan
+- **Metriche di Rete**: Latenza, TPS, stato della blockchain Solana
+- **Dati DEX**: Integrazione con Raydium, Orca, Jupiter per liquidità e coppie di trading
+- **Statistiche di Sistema**: Monitoraggio continuo delle performance
 
-- `GET /api/system/stats` - Statistiche sistema
-- `GET /api/system/logs` - Log sistema
-- `GET /api/config` - Configurazione
+### 🔧 Funzionalità Tecniche
+- **API RESTful** completa per tutte le operazioni
+- **Connessione Solana** nativa tramite @solana/web3.js
+- **Rate Limiting** intelligente per evitare sovraccarichi
+- **Cache System** per ottimizzare le performance
+- **Error Handling** robusto con fallback automatici
 
-## Deployment Gratuito
+## 🛠️ Installazione e Setup
 
-### Render (Raccomandato)
+### Prerequisiti
+- Node.js >= 16.0.0
+- npm >= 8.0.0
+- Chiave API Solscan (opzionale ma consigliata)
 
-1. Crea account su [render.com](https://render.com)
-2. Connetti repository GitHub
-3. Crea nuovo Web Service
-4. Configura:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-   - Environment: Node
-   - Port: 3001
-
-### Railway
-
-1. Crea account su [railway.app](https://railway.app)
-2. Deploy da GitHub
-3. Configura variabili ambiente se necessario
-
-### Fly.io
-
-1. Installa Fly CLI
-2. `fly launch`
-3. `fly deploy`
-
-## Variabili Ambiente
-
-- `PORT` - Porta server (default: 3001)
-- `SOLANA_RPC_URL` - URL RPC Solana (default: mainnet)
-
-## Installazione Locale
+### Installazione
 
 ```bash
+# Clona il repository
+git clone https://github.com/username/solana-token-dashboard.git
+cd solana-token-dashboard/solana-backend
+
+# Installa le dipendenze
 npm install
+
+# Configura le variabili d'ambiente
+cp .env.example .env
+# Modifica .env con le tue configurazioni
+
+# Avvia il server
 npm start
 ```
 
-Server disponibile su http://localhost:3001
+### Configurazione Ambiente (.env)
+
+```env
+# Configurazione Solana
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_NETWORK=mainnet-beta
+
+# Configurazione API
+PORT=3001
+NODE_ENV=development
+
+# Configurazione CORS
+CORS_ORIGIN=http://localhost:3000
+
+# Configurazione Solscan API
+SOLSCAN_API_KEY=your_solscan_api_key_here
+SOLSCAN_BASE_URL=https://pro-api.solscan.io/v2.0
+
+# Configurazione Rate Limiting
+API_RATE_LIMIT_DELAY=100
+API_REQUEST_TIMEOUT=10000
+
+# Configurazione Cache
+CACHE_TTL=300000
+CACHE_ENABLED=true
+```
+
+## 📡 Endpoints API
+
+### Sistema e Statistiche
+
+#### `GET /api/system/stats`
+Restituisce statistiche complete del sistema in tempo reale.
+
+#### `GET /api/system/health`
+Controllo dello stato di salute del sistema.
+
+#### `GET /api/tokens`
+Restituisce la lista dei token reali dalla rete Solana.
+
+## 🚀 Deploy
+
+### Vercel
+```bash
+# Installa Vercel CLI
+npm i -g vercel
+
+# Deploy
+npm run deploy:vercel
+```
+
+### Render
+1. Connetti il repository GitHub a Render
+2. Configura le variabili d'ambiente
+3. Deploy automatico ad ogni push
+
+## 🔧 Sviluppo
+
+### Script Disponibili
+
+```bash
+# Sviluppo con auto-reload
+npm run dev
+
+# Produzione
+npm start
+
+# Build
+npm run build
+
+# Test
+npm test
+```
+
+## 📄 Licenza
+
+Questo progetto è sotto licenza MIT.
+
+---
+
+**Sviluppato con ❤️ per l'ecosistema Solana**
