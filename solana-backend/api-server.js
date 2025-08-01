@@ -74,57 +74,35 @@ async function getRealSolanaTokens() {
         'User-Agent': 'Solana-Token-Backend/1.0.0'
       };
       
-      const solscanResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/trending`, {
+      const solscanResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/list?sort_by=market_cap&sort_order=desc&page=1&page_size=10`, {
         headers,
         timeout: API_REQUEST_TIMEOUT
       });
       
       if (solscanResponse.data && solscanResponse.data.data) {
-        const trendingTokens = solscanResponse.data.data.slice(0, 8); // Prendi i primi 8 token trending
+        const topTokens = solscanResponse.data.data.slice(0, 8); // Prendi i primi 8 token per market cap
         
-        for (const token of trendingTokens) {
+        for (const token of topTokens) {
           try {
-            // Ottieni informazioni dettagliate per ogni token
-            const tokenDetailResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/meta?address=${token.address}`, {
-              headers,
-              timeout: 15000
-            });
-            
-            if (tokenDetailResponse.data && tokenDetailResponse.data.data) {
-              const tokenDetail = tokenDetailResponse.data.data;
-              
-              const tokenData = {
-                address: token.address,
-                name: tokenDetail.name || token.symbol,
-                symbol: tokenDetail.symbol || token.symbol,
-                decimals: tokenDetail.decimals || 9,
-                supply: parseFloat(tokenDetail.supply) || 0,
-                listed: true,
-                tradingActive: true,
-                createdAt: tokenDetail.createdTime ? new Date(tokenDetail.createdTime).getTime() : Date.now(),
-                marketCap: token.marketCap || 0,
-                price: token.price || 0,
-                volume24h: token.volume24h || 0
-              };
-              
-              realTokens.push(tokenData);
-            }
-          } catch (detailError) {
-            console.error(`Errore nel recupero dettagli per token ${token.address}:`, detailError.message);
-            // Aggiungi token con dati base se non riesce a recuperare dettagli
-            realTokens.push({
+            const tokenData = {
               address: token.address,
-              name: token.symbol,
+              name: token.name || token.symbol,
               symbol: token.symbol,
-              decimals: 9,
-              supply: 0,
+              decimals: token.decimals || 9,
+              supply: 0, // Non disponibile nell'endpoint list
               listed: true,
               tradingActive: true,
-              createdAt: Date.now(),
-              marketCap: token.marketCap || 0,
+              createdAt: token.created_time ? token.created_time * 1000 : Date.now(), // Converti da Unix timestamp
+              marketCap: token.market_cap || 0,
               price: token.price || 0,
-              volume24h: token.volume24h || 0
-            });
+              volume24h: 0, // Non disponibile nell'endpoint list
+              priceChange24h: token.price_24h_change || 0,
+              holders: token.holder || 0
+            };
+            
+            realTokens.push(tokenData);
+          } catch (tokenError) {
+            console.error(`Errore nel processare token ${token.address}:`, tokenError.message);
           }
           
           // Aggiungi un piccolo delay per evitare rate limiting
