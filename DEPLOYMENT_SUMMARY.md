@@ -3,7 +3,7 @@
 ## ✅ Stato Attuale
 
 ### ✅ Completato
-- [x] Backend API funzionante (porta 3001)
+- [x] Backend API funzionante (porta 10000)
 - [x] Frontend React funzionante (porta 3002)
 - [x] Integrazione Solana mainnet
 - [x] Build di produzione creato
@@ -64,7 +64,7 @@ git commit -m "Solana Token Generator Backend API"
 5. Configura:
    - Build: `npm install`
    - Start: `npm start`
-   - Port: 3001
+   - Port: 10000
 
 ### 3. Deploy Frontend (Vercel - Gratuito)
 

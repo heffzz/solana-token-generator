@@ -125,10 +125,10 @@ npm start
 ### Variabili Ambiente
 ```bash
 # Frontend (.env)
-REACT_APP_API_URL=http://localhost:3001
+REACT_APP_API_URL=http://localhost:10000
 
 # Backend
-PORT=3001
+PORT=10000
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 

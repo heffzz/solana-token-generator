@@ -113,7 +113,7 @@ export const SystemProvider = ({ children }) => {
       
       // Aggiungi log di errore
       addLog('system', '❌ Impossibile connettersi al backend', 'error');
-      addLog('system', 'Verificare che il server API sia in esecuzione su porta 3001', 'warning');
+      addLog('system', 'Verificare che il server API sia in esecuzione su porta 10000', 'warning');
     }
   };
 

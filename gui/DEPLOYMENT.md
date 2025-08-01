@@ -5,7 +5,7 @@ Guida completa per il deployment gratuito del sistema autonomo di generazione to
 ## 🎯 Architettura
 
 - **Frontend**: React App (porta 3000/3002)
-- **Backend**: Node.js API (porta 3001)
+- **Backend**: Node.js API (porta 10000)
 - **Blockchain**: Solana Mainnet
 
 ## 🚀 Deployment Gratuito
@@ -44,7 +44,7 @@ Guida completa per il deployment gratuito del sistema autonomo di generazione to
      - Environment: Node
      - Build Command: `npm install`
      - Start Command: `npm start`
-     - Port: 3001
+     - Port: 10000
 
 ### Alternative Gratuite
 

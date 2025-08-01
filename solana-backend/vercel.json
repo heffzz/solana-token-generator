@@ -13,6 +13,7 @@
     }
   ],
   "env": {
+    "PORT": "10000",
     "SOLANA_RPC_URL": "https://api.mainnet-beta.solana.com",
     "SOLANA_NETWORK": "mainnet-beta",
     "NODE_ENV": "production",

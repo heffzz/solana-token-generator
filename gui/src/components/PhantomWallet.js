@@ -125,7 +125,7 @@ const PhantomWallet = () => {
       console.log(`Recupero saldo per: ${walletAddress} su rete: ${network}`);
       
       // Usa il servizio API invece di fetch diretto
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/balance/${walletAddress}/${network}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:10000'}/api/phantom/balance/${walletAddress}/${network}`);
       const data = await response.json();
       
       if (data.success) {
@@ -162,7 +162,7 @@ const PhantomWallet = () => {
       setError(null);
       console.log(`Richiesta airdrop per: ${publicKey}`);
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/airdrop`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:10000'}/api/phantom/airdrop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ const PhantomWallet = () => {
     };
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/phantom/save-config`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:10000'}/api/phantom/save-config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

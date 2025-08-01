@@ -102,7 +102,7 @@ class AppLauncher {
             cwd: join(__dirname, 'gui'),
             stdio: ['inherit', 'pipe', 'pipe'],
             shell: true,
-            env: { ...process.env, PORT: '3001' }
+            env: { ...process.env, PORT: '10000' }
         });
 
         guiProcess.stdout.on('data', (data) => {
@@ -113,10 +113,10 @@ class AppLauncher {
             if (output.includes('webpack compiled') || output.includes('Local:')) {
                 console.log('🎉 GUI React pronta!');
                 console.log('\n📱 Accesso all\'applicazione:');
-                console.log('   • GUI React: http://localhost:3001');
+                console.log('   • GUI React: http://localhost:10000');
                 console.log('   • Phantom API: http://localhost:3000');
                 console.log('\n🦄 Phantom Wallet integrato nella GUI!');
-                console.log('   Vai su: http://localhost:3001/phantom-wallet\n');
+                console.log('   Vai su: http://localhost:10000/phantom-wallet\n');
             }
         });
 

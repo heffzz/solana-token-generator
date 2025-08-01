@@ -27,7 +27,7 @@ Backend API per il sistema autonomo di generazione token SPL su Solana.
    - Build Command: `npm install`
    - Start Command: `npm start`
    - Environment: Node
-   - Port: 3001
+   - Port: 10000
 
 ### Railway
 
@@ -43,7 +43,7 @@ Backend API per il sistema autonomo di generazione token SPL su Solana.
 
 ## Variabili Ambiente
 
-- `PORT` - Porta server (default: 3001)
+- `PORT` - Porta server (default: 10000)
 - `SOLANA_RPC_URL` - URL RPC Solana (default: mainnet)
 
 ## Installazione Locale
@@ -53,4 +53,4 @@ npm install
 npm start
 ```
 
-Server disponibile su http://localhost:3001
+Server disponibile su http://localhost:10000

@@ -10,7 +10,7 @@ import { Logger } from './logger.js';
 import { config } from './config.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = 10000;
 
 // Middleware
 app.use(cors());

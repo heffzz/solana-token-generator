@@ -3,7 +3,7 @@ import axios from 'axios';
 class RealDataService {
   constructor() {
     // Usa variabile d'ambiente per il backend, fallback a localhost per sviluppo
-    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:10000';
     this.baseUrl = `${backendUrl}/api`;
     this.phantomUrl = 'http://localhost:3000/api';
   }

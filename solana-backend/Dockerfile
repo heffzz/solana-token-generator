@@ -14,7 +14,7 @@ RUN npm ci --only=production
 COPY . .
 
 # Esponi porta
-EXPOSE 3001
+EXPOSE 10000
 
 # Crea utente non-root
 RUN addgroup -g 1001 -S nodejs

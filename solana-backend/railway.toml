@@ -5,7 +5,7 @@ cmd = "npm install"
 cmd = "npm start"
 
 [env]
-PORT = "3001"
+PORT = "10000"
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
 
 [healthcheck]
