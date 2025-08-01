@@ -96,9 +96,51 @@ npm run deploy:vercel
 ```
 
 ### Render
-1. Connetti il repository GitHub a Render
-2. Configura le variabili d'ambiente
-3. Deploy automatico ad ogni push
+
+#### Metodo 1: Deploy Automatico con render.yaml
+1. Il file `render.yaml` è già configurato nel repository
+2. Connetti il repository GitHub a Render
+3. Render rileverà automaticamente la configurazione
+4. (Opzionale) Aggiungi `SOLSCAN_API_KEY` nelle variabili d'ambiente per dati token completi
+
+#### Metodo 2: Configurazione Manuale
+1. Crea un nuovo Web Service su Render
+2. Connetti il repository GitHub
+3. Configura:
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Environment**: Node
+   - **Plan**: Free
+
+#### Variabili d'Ambiente Render
+Configura queste variabili nel dashboard Render:
+
+**Obbligatorie:**
+- `NODE_ENV=production`
+- `PORT=10000` (Render usa la porta 10000)
+- `SOLANA_RPC_URL=https://api.mainnet-beta.solana.com`
+- `CORS_ORIGIN=*`
+
+**Opzionali (per funzionalità avanzate):**
+- `SOLSCAN_API_KEY=your_api_key` (per dati token reali)
+- `GITHUB_TOKEN=your_token` (per integrazione GitHub)
+
+#### Risoluzione Problemi Deploy Render
+
+**Errore: "Cannot find module"**
+- Verifica che tutte le dipendenze siano in `package.json`
+- Controlla che `npm install` funzioni localmente
+- Assicurati che il file `package-lock.json` sia aggiornato
+
+**Errore: "Application failed to respond"**
+- Verifica che la porta sia configurata correttamente (`PORT=10000`)
+- Controlla che il server si avvii senza errori nei log
+- Assicurati che l'endpoint `/api/system/stats` risponda
+
+**Errore: "Build failed"**
+- Controlla che Node.js version sia compatibile (>= 16.0.0)
+- Verifica che non ci siano errori di sintassi
+- Assicurati che tutte le dipendenze siano installabili
 
 ## 🔧 Sviluppo
 

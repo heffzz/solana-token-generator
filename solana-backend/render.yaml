@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: solana-token-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/system/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SOLANA_RPC_URL
+        value: https://api.mainnet-beta.solana.com
+      - key: SOLANA_NETWORK
+        value: mainnet-beta
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: SOLSCAN_BASE_URL
+        value: https://pro-api.solscan.io/v2.0
+      - key: API_RATE_LIMIT_DELAY
+        value: 100
+      - key: API_REQUEST_TIMEOUT
+        value: 10000
+      - key: CACHE_TTL
+        value: 300000
+      - key: CACHE_ENABLED
+        value: true
+    # Variabili opzionali da configurare manualmente nel dashboard Render:
+    # SOLSCAN_API_KEY - per accesso completo all'API Solscan
+    # GITHUB_TOKEN - per integrazione GitHub
+    # VERCEL_TOKEN - per deploy Vercel

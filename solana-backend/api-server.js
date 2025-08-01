@@ -1,26 +1,45 @@
 const express = require('express');
 const cors = require('cors');
-const { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL } = require('@solana/web3.js');
+const { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, clusterApiUrl } = require('@solana/web3.js');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const { performance } = require('perf_hooks');
 
+// Carica le variabili d'ambiente solo se il file .env esiste
+try {
+  require('dotenv').config();
+} catch (error) {
+  console.log('⚠️  File .env non trovato, usando variabili d\'ambiente del sistema');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Configurazione CORS
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Configurazione Solana
-const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
+const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+
+// Configurazione API con fallback
+const SOLSCAN_API_KEY = process.env.SOLSCAN_API_KEY || null;
+const SOLSCAN_BASE_URL = process.env.SOLSCAN_BASE_URL || 'https://pro-api.solscan.io/v2.0';
+const API_RATE_LIMIT_DELAY = parseInt(process.env.API_RATE_LIMIT_DELAY) || 100;
+const API_REQUEST_TIMEOUT = parseInt(process.env.API_REQUEST_TIMEOUT) || 10000;
+const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 300000;
+const CACHE_ENABLED = process.env.CACHE_ENABLED !== 'false';
 
 // Connessioni multiple per Phantom
 const connections = {
-    devnet: new Connection('https://api.devnet.solana.com', 'confirmed'),
-    mainnet: new Connection('https://api.mainnet-beta.solana.com', 'confirmed')
+    devnet: new Connection(process.env.SOLANA_DEVNET_RPC_URL || clusterApiUrl('devnet'), 'confirmed'),
+    mainnet: new Connection(process.env.SOLANA_MAINNET_RPC_URL || clusterApiUrl('mainnet-beta'), 'confirmed')
 };
 
 // Stato del sistema
@@ -44,11 +63,14 @@ async function getRealSolanaTokens() {
     
     // Ottieni token reali usando l'API Solscan
     try {
-      const solscanResponse = await axios.get('https://pro-api.solscan.io/v2.0/token/trending', {
-        headers: {
-          'token': process.env.SOLSCAN_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTQwNTY3NjAzNDYsImVtYWlsIjoibHVjYTY4NTRAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzU0MDU2NzYwfQ.MA63CzDwnsKv_SrcZHdy5df8QUb0Ss_eDOgtj9pnjCE'
-        },
-        timeout: 10000
+      const headers = {};
+      if (SOLSCAN_API_KEY) {
+        headers['token'] = SOLSCAN_API_KEY;
+      }
+      
+      const solscanResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/trending`, {
+        headers,
+        timeout: API_REQUEST_TIMEOUT
       });
       
       if (solscanResponse.data && solscanResponse.data.data) {
@@ -57,10 +79,13 @@ async function getRealSolanaTokens() {
         for (const token of trendingTokens) {
           try {
             // Ottieni informazioni dettagliate per ogni token
-            const tokenDetailResponse = await axios.get(`https://pro-api.solscan.io/v2.0/token/meta?address=${token.address}`, {
-              headers: {
-                'token': process.env.SOLSCAN_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTQwNTY3NjAzNDYsImVtYWlsIjoibHVjYTY4NTRAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzU0MDU2NzYwfQ.MA63CzDwnsKv_SrcZHdy5df8QUb0Ss_eDOgtj9pnjCE'
-              },
+            const detailHeaders = {};
+            if (SOLSCAN_API_KEY) {
+              detailHeaders['token'] = SOLSCAN_API_KEY;
+            }
+            
+            const tokenDetailResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/meta?address=${token.address}`, {
+              headers: detailHeaders,
               timeout: 5000
             });
             
@@ -102,11 +127,14 @@ async function getRealSolanaTokens() {
           }
           
           // Aggiungi un piccolo delay per evitare rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, API_RATE_LIMIT_DELAY));
         }
       }
     } catch (solscanError) {
       console.error('Errore nell\'API Solscan:', solscanError.message);
+      if (!SOLSCAN_API_KEY) {
+        console.log('💡 Suggerimento: Configura SOLSCAN_API_KEY per ottenere dati token reali');
+      }
     }
     
     // Se non abbiamo ottenuto token da Solscan, usa token principali come fallback
@@ -393,6 +421,23 @@ async function getRealTotalLiquidity() {
 }
 
 // API Endpoints
+
+// Endpoint per health check (richiesto da Render)
+app.get('/api/system/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'solana-token-backend',
+    version: '1.0.0',
+    environment: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      port: PORT,
+      solanaNetwork: process.env.SOLANA_NETWORK || 'mainnet-beta',
+      hasApiKey: !!SOLSCAN_API_KEY
+    }
+  });
+});
+
 app.get('/api/system/stats', async (req, res) => {
   try {
     const realTokens = await getRealSolanaTokens();
