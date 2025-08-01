@@ -27,7 +27,12 @@ services:
         value: 300000
       - key: CACHE_ENABLED
         value: true
-    # Variabili opzionali da configurare manualmente nel dashboard Render:
-    # SOLSCAN_API_KEY - per accesso completo all'API Solscan
+    # IMPORTANTE: Configura manualmente nel dashboard Render:
+    # SOLSCAN_API_KEY - Obbligatoria per dati token reali (evita errore 401)
+    #   1. Vai su https://pro-api.solscan.io/ e registrati
+    #   2. Ottieni la tua API key
+    #   3. Aggiungila come variabile d'ambiente su Render
+    # 
+    # Variabili opzionali:
     # GITHUB_TOKEN - per integrazione GitHub
     # VERCEL_TOKEN - per deploy Vercel

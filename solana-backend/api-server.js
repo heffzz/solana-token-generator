@@ -61,12 +61,18 @@ async function getRealSolanaTokens() {
   try {
     const realTokens = [];
     
+    // Se non abbiamo API key, usa direttamente i token di fallback
+    if (!SOLSCAN_API_KEY) {
+      console.log('ℹ️  SOLSCAN_API_KEY non configurata, usando token predefiniti');
+      return await getFallbackTokens();
+    }
+    
     // Ottieni token reali usando l'API Solscan
     try {
-      const headers = {};
-      if (SOLSCAN_API_KEY) {
-        headers['token'] = SOLSCAN_API_KEY;
-      }
+      const headers = {
+        'token': SOLSCAN_API_KEY,
+        'User-Agent': 'Solana-Token-Backend/1.0.0'
+      };
       
       const solscanResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/trending`, {
         headers,
@@ -74,18 +80,13 @@ async function getRealSolanaTokens() {
       });
       
       if (solscanResponse.data && solscanResponse.data.data) {
-        const trendingTokens = solscanResponse.data.data.slice(0, 20); // Prendi i primi 20 token trending
+        const trendingTokens = solscanResponse.data.data.slice(0, 8); // Prendi i primi 8 token trending
         
         for (const token of trendingTokens) {
           try {
             // Ottieni informazioni dettagliate per ogni token
-            const detailHeaders = {};
-            if (SOLSCAN_API_KEY) {
-              detailHeaders['token'] = SOLSCAN_API_KEY;
-            }
-            
             const tokenDetailResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/meta?address=${token.address}`, {
-              headers: detailHeaders,
+              headers,
               timeout: 5000
             });
             
@@ -129,66 +130,113 @@ async function getRealSolanaTokens() {
           // Aggiungi un piccolo delay per evitare rate limiting
           await new Promise(resolve => setTimeout(resolve, API_RATE_LIMIT_DELAY));
         }
+        
+        if (realTokens.length > 0) {
+          console.log(`✅ Recuperati ${realTokens.length} token reali da Solscan`);
+          return realTokens;
+        }
       }
     } catch (solscanError) {
       console.error('Errore nell\'API Solscan:', solscanError.message);
-      if (!SOLSCAN_API_KEY) {
-        console.log('💡 Suggerimento: Configura SOLSCAN_API_KEY per ottenere dati token reali');
-      }
-    }
-    
-    // Se non abbiamo ottenuto token da Solscan, usa token principali come fallback
-    if (realTokens.length === 0) {
-      const mainTokens = [
-        {
-          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-          name: 'USD Coin',
-          symbol: 'USDC'
-        },
-        {
-          address: 'So11111111111111111111111111111111111111112',
-          name: 'Wrapped SOL',
-          symbol: 'SOL'
-        },
-        {
-          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-          name: 'Tether USD',
-          symbol: 'USDT'
-        }
-      ];
       
-      for (const tokenInfo of mainTokens) {
-        try {
-          const tokenMint = new PublicKey(tokenInfo.address);
-          const supplyInfo = await connection.getTokenSupply(tokenMint);
-          const accountInfo = await connection.getAccountInfo(tokenMint);
-          
-          if (accountInfo && supplyInfo) {
-            realTokens.push({
-              address: tokenInfo.address,
-              name: tokenInfo.name,
-              symbol: tokenInfo.symbol,
-              decimals: supplyInfo.value.decimals,
-              supply: supplyInfo.value.uiAmount || 0,
-              listed: true,
-              tradingActive: true,
-              createdAt: Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000),
-              marketCap: 0,
-              price: 0,
-              volume24h: 0
-            });
-          }
-        } catch (error) {
-          console.error(`Errore nel recupero dati per token ${tokenInfo.symbol}:`, error);
+      if (solscanError.response) {
+        const status = solscanError.response.status;
+        if (status === 401) {
+          console.error('❌ API Key Solscan non valida o scaduta');
+        } else if (status === 429) {
+          console.error('⚠️  Rate limit raggiunto per API Solscan');
+        } else if (status === 403) {
+          console.error('❌ Accesso negato all\'API Solscan');
+        } else {
+          console.error(`❌ Errore HTTP ${status} dall\'API Solscan`);
         }
       }
+      
+      console.log('💡 Suggerimento: Verifica la configurazione SOLSCAN_API_KEY su Render');
     }
     
-    return realTokens;
+    // Fallback ai token principali se Solscan non è disponibile
+    console.log('⚠️  Usando token di fallback (Solscan non disponibile)');
+    return await getFallbackTokens();
   } catch (error) {
     console.error('Errore nel recupero token Solana:', error);
-    return [];
+    return await getFallbackTokens();
   }
+}
+
+// Funzione helper per ottenere token di fallback
+async function getFallbackTokens() {
+  const mainTokens = [
+    {
+      address: 'So11111111111111111111111111111111111111112',
+      name: 'Wrapped SOL',
+      symbol: 'SOL'
+    },
+    {
+      address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      name: 'USD Coin',
+      symbol: 'USDC'
+    },
+    {
+      address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      name: 'Tether USD',
+      symbol: 'USDT'
+    },
+    {
+      address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+      name: 'Bonk',
+      symbol: 'BONK'
+    },
+    {
+      address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
+      name: 'Marinade staked SOL',
+      symbol: 'mSOL'
+    }
+  ];
+  
+  const fallbackTokens = [];
+  
+  for (const tokenInfo of mainTokens) {
+    try {
+      const tokenMint = new PublicKey(tokenInfo.address);
+      const supplyInfo = await connection.getTokenSupply(tokenMint);
+      const accountInfo = await connection.getAccountInfo(tokenMint);
+      
+      if (accountInfo && supplyInfo) {
+        fallbackTokens.push({
+          address: tokenInfo.address,
+          name: tokenInfo.name,
+          symbol: tokenInfo.symbol,
+          decimals: supplyInfo.value.decimals,
+          supply: supplyInfo.value.uiAmount || 0,
+          listed: true,
+          tradingActive: true,
+          createdAt: Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000),
+          marketCap: 0,
+          price: 0,
+          volume24h: 0
+        });
+      }
+    } catch (error) {
+      console.error(`Errore nel recupero dati per token ${tokenInfo.symbol}:`, error);
+      // Aggiungi token con dati statici se la connessione Solana fallisce
+      fallbackTokens.push({
+        address: tokenInfo.address,
+        name: tokenInfo.name,
+        symbol: tokenInfo.symbol,
+        decimals: tokenInfo.symbol === 'SOL' ? 9 : 6,
+        supply: tokenInfo.symbol === 'SOL' ? 500000000 : 1000000000,
+        listed: true,
+        tradingActive: true,
+        createdAt: Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000),
+        marketCap: 0,
+        price: 0,
+        volume24h: 0
+      });
+    }
+  }
+  
+  return fallbackTokens;
 }
 
 async function getRealTransactionStats() {

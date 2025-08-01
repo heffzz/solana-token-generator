@@ -121,8 +121,11 @@ Configura queste variabili nel dashboard Render:
 - `SOLANA_RPC_URL=https://api.mainnet-beta.solana.com`
 - `CORS_ORIGIN=*`
 
-**Opzionali (per funzionalità avanzate):**
-- `SOLSCAN_API_KEY=your_api_key` (per dati token reali)
+**Opzionali ma Raccomandate:**
+- `SOLSCAN_API_KEY=your_api_key` (per dati token reali - evita errore 401)
+  - Registrati su https://pro-api.solscan.io/
+  - Ottieni la tua API key gratuita
+  - Aggiungila nelle variabili d'ambiente di Render
 - `GITHUB_TOKEN=your_token` (per integrazione GitHub)
 
 #### Risoluzione Problemi Deploy Render
