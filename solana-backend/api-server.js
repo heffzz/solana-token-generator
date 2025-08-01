@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { Connection, PublicKey, Keypair } = require('@solana/web3.js');
+const { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL } = require('@solana/web3.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,6 +14,12 @@ app.use(express.json());
 // Configurazione Solana
 const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+
+// Connessioni multiple per Phantom
+const connections = {
+    devnet: new Connection('https://api.devnet.solana.com', 'confirmed'),
+    mainnet: new Connection('https://api.mainnet-beta.solana.com', 'confirmed')
+};
 
 // Stato del sistema
 let systemState = {
@@ -253,12 +259,108 @@ app.get('/api/config', (req, res) => {
   }
 });
 
+// Endpoint Phantom Wallet
+
+// GET /api/phantom/balance/:publicKey/:network? - Ottieni saldo wallet
+app.get('/api/phantom/balance/:publicKey/:network?', async (req, res) => {
+  try {
+    const { publicKey, network = 'devnet' } = req.params;
+    
+    // Validazione network
+    if (!connections[network]) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Network non supportato: ${network}. Usa 'devnet' o 'mainnet'` 
+      });
+    }
+    
+    const connection = connections[network];
+    const pubKey = new PublicKey(publicKey);
+    const balance = await connection.getBalance(pubKey);
+    const balanceSOL = balance / LAMPORTS_PER_SOL;
+    
+    res.json({
+      success: true,
+      balance: balanceSOL,
+      lamports: balance,
+      network: network,
+      publicKey: publicKey
+    });
+  } catch (error) {
+    console.error('Errore nel recupero saldo:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Errore nel recupero del saldo: ' + error.message 
+    });
+  }
+});
+
+// POST /api/phantom/airdrop - Richiedi airdrop (solo devnet)
+app.post('/api/phantom/airdrop', async (req, res) => {
+  try {
+    const { publicKey } = req.body;
+    
+    if (!publicKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'PublicKey richiesta' 
+      });
+    }
+    
+    const connection = connections.devnet;
+    const pubKey = new PublicKey(publicKey);
+    
+    // Richiedi airdrop di 1 SOL
+    const signature = await connection.requestAirdrop(pubKey, LAMPORTS_PER_SOL);
+    await connection.confirmTransaction(signature);
+    
+    res.json({
+      success: true,
+      signature: signature,
+      amount: 1,
+      message: 'Airdrop di 1 SOL completato con successo'
+    });
+  } catch (error) {
+    console.error('Errore nell\'airdrop:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Errore nell\'airdrop: ' + error.message 
+    });
+  }
+});
+
+// POST /api/phantom/save-config - Salva configurazione wallet
+app.post('/api/phantom/save-config', async (req, res) => {
+  try {
+    const config = req.body;
+    
+    // Salva la configurazione in un file
+    fs.writeFileSync('./phantom-wallet-config.json', JSON.stringify(config, null, 2));
+    
+    res.json({
+      success: true,
+      message: 'Configurazione salvata con successo'
+    });
+  } catch (error) {
+    console.error('Errore nel salvataggio configurazione:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Errore nel salvataggio: ' + error.message 
+    });
+  }
+});
+
 // Avvia il server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server backend avviato su porta ${PORT}`);
   console.log(`📡 Connesso a Solana: ${SOLANA_RPC_URL}`);
   console.log(`📊 API disponibili su http://localhost:${PORT}/api`);
   console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`\n📋 Endpoint disponibili:`);
+  console.log(`   GET  /api/system/stats - Statistiche sistema`);
+  console.log(`   GET  /api/phantom/balance/:publicKey/:network? - Saldo wallet`);
+  console.log(`   POST /api/phantom/airdrop - Richiedi airdrop`);
+  console.log(`   POST /api/phantom/save-config - Salva configurazione wallet`);
 });
 
 // Gestione errori
