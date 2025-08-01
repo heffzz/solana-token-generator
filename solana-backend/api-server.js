@@ -87,7 +87,7 @@ async function getRealSolanaTokens() {
             // Ottieni informazioni dettagliate per ogni token
             const tokenDetailResponse = await axios.get(`${SOLSCAN_BASE_URL}/token/meta?address=${token.address}`, {
               headers,
-              timeout: 5000
+              timeout: 15000
             });
             
             if (tokenDetailResponse.data && tokenDetailResponse.data.data) {
@@ -374,8 +374,13 @@ async function getRealDexData(activePairs, totalLiquidity) {
   };
   
   try {
-    // Ottieni dati reali da Raydium
-    const raydiumResponse = await axios.get('https://api.raydium.io/v2/main/pairs', { timeout: 5000 });
+    // Ottieni dati reali da Raydium con timeout esteso
+    const raydiumResponse = await axios.get('https://api.raydium.io/v2/main/pairs', { 
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Solana-Token-Generator/1.0'
+      }
+    });
     if (raydiumResponse.status === 200 && raydiumResponse.data) {
       // Calcola il numero di coppie attive
       const raydiumPairs = raydiumResponse.data.filter(pair => pair.liquidity && pair.liquidity > 0);
@@ -385,17 +390,27 @@ async function getRealDexData(activePairs, totalLiquidity) {
       dexData.raydium.liquidity = raydiumPairs.reduce((total, pair) => {
         return total + (parseFloat(pair.liquidity) || 0);
       }, 0);
+      console.log(`✅ Dati Raydium recuperati: ${dexData.raydium.pairs} coppie, $${dexData.raydium.liquidity.toLocaleString()} liquidità`);
     }
   } catch (error) {
-    console.error('Errore nel recupero dati Raydium:', error);
+    if (error.code === 'ECONNABORTED') {
+      console.warn('⚠️  Timeout API Raydium - usando dati di fallback');
+    } else {
+      console.error('❌ Errore nel recupero dati Raydium:', error.message);
+    }
     // Usa una stima basata sui dati disponibili
     dexData.raydium.pairs = Math.floor(activePairs * 0.4);
     dexData.raydium.liquidity = Math.floor(totalLiquidity * 0.4);
   }
   
   try {
-    // Ottieni dati reali da Orca
-    const orcaResponse = await axios.get('https://api.orca.so/pools', { timeout: 5000 });
+    // Ottieni dati reali da Orca con timeout esteso
+    const orcaResponse = await axios.get('https://api.orca.so/pools', { 
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Solana-Token-Generator/1.0'
+      }
+    });
     if (orcaResponse.status === 200 && orcaResponse.data) {
       // Calcola il numero di pool attivi
       const orcaPools = Object.values(orcaResponse.data).filter(pool => 
@@ -407,9 +422,14 @@ async function getRealDexData(activePairs, totalLiquidity) {
       dexData.orca.liquidity = orcaPools.reduce((total, pool) => {
         return total + (parseFloat(pool.liquidity) || 0);
       }, 0);
+      console.log(`✅ Dati Orca recuperati: ${dexData.orca.pairs} pool, $${dexData.orca.liquidity.toLocaleString()} liquidità`);
     }
   } catch (error) {
-    console.error('Errore nel recupero dati Orca:', error);
+    if (error.code === 'ECONNABORTED') {
+      console.warn('⚠️  Timeout API Orca - usando dati di fallback');
+    } else {
+      console.error('❌ Errore nel recupero dati Orca:', error.message);
+    }
     // Usa una stima basata sui dati disponibili
     dexData.orca.pairs = Math.floor(activePairs * 0.35);
     dexData.orca.liquidity = Math.floor(totalLiquidity * 0.35);
@@ -417,7 +437,12 @@ async function getRealDexData(activePairs, totalLiquidity) {
   
   try {
     // Per Jupiter, utilizziamo un endpoint di quote come proxy per verificare l'attività
-    const jupiterResponse = await axios.get('https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=10000000&slippageBps=50', { timeout: 5000 });
+    const jupiterResponse = await axios.get('https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=10000000&slippageBps=50', { 
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Solana-Token-Generator/1.0'
+      }
+    });
     if (jupiterResponse.status === 200 && jupiterResponse.data) {
       // Stima il numero di coppie basato sui dati disponibili
       // Jupiter non espone direttamente il numero di coppie, quindi facciamo una stima
@@ -425,9 +450,14 @@ async function getRealDexData(activePairs, totalLiquidity) {
       
       // Stima la liquidità basata sui dati disponibili
       dexData.jupiter.liquidity = Math.floor(totalLiquidity * 0.25);
+      console.log(`✅ Dati Jupiter recuperati: ${dexData.jupiter.pairs} coppie stimate`);
     }
   } catch (error) {
-    console.error('Errore nel recupero dati Jupiter:', error);
+    if (error.code === 'ECONNABORTED') {
+      console.warn('⚠️  Timeout API Jupiter - usando dati di fallback');
+    } else {
+      console.error('❌ Errore nel recupero dati Jupiter:', error.message);
+    }
     // Usa una stima basata sui dati disponibili
     dexData.jupiter.pairs = Math.floor(activePairs * 0.25);
     dexData.jupiter.liquidity = Math.floor(totalLiquidity * 0.25);
