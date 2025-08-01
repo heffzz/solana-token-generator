@@ -36,7 +36,16 @@ class PhantomBackend {
     // Ottieni saldo wallet
     async getWalletBalance(publicKey, network = 'devnet') {
         try {
+            // Validazione network
+            if (!this.connections[network]) {
+                throw new Error(`Network non supportato: ${network}. Usa 'devnet' o 'mainnet'`);
+            }
+            
             const connection = this.connections[network];
+            if (!connection) {
+                throw new Error(`Connessione non disponibile per network: ${network}`);
+            }
+            
             const pubKey = new PublicKey(publicKey);
             const balance = await connection.getBalance(pubKey);
             return {
@@ -45,6 +54,7 @@ class PhantomBackend {
                 network: network
             };
         } catch (error) {
+            console.error(`Errore getWalletBalance per ${publicKey} su ${network}:`, error.message);
             return {
                 success: false,
                 error: error.message
